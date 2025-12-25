@@ -1,8 +1,35 @@
 # Guia de Instalação do Driver RTL8188FU para dArkOS Existente
 
-Se você já tem o dArkOS instalado no seu R36S e quer adicionar suporte para o adaptador WiFi USB **Realtek RTL8188FTV** (VID:0bda PID:f179), existem três opções:
+Se você já tem o dArkOS instalado no seu R36S e quer adicionar suporte para o adaptador WiFi USB **Realtek RTL8188FTV** (VID:0bda PID:f179), existem quatro opções:
 
-## 📦 Opção 1: Pacote Pré-Compilado (MAIS FÁCIL)
+## 🎮 Opção 1: Menu Tools do EmulationStation (MAIS FÁCIL!)
+
+### Preparação (no PC/WSL):
+
+```bash
+cd /home/user/dArkOS_experiments
+./build_rtl8188fu_standalone.sh
+```
+
+Isso gera: **`rtl8188fu_install_package.tar.gz`**
+
+### Transferir para o R36S:
+
+Copie **`rtl8188fu_install_package.tar.gz`** para `/roms/tools/` no cartão SD do R36S
+
+### No R36S:
+
+1. Abra o EmulationStation
+2. Vá em **Tools** no menu principal
+3. Execute: **"Install RTL8188FU WiFi Driver"**
+4. Siga as instruções na tela
+5. Conecte o adaptador WiFi quando solicitado
+
+**Pronto!** 🎉
+
+---
+
+## 📦 Opção 2: Pacote Pré-Compilado (Via Terminal)
 
 ### Passo 1: Compilar o pacote no seu PC
 
@@ -44,7 +71,7 @@ lsmod | grep rtl8188fu
 
 ---
 
-## 🔧 Opção 2: Compilar Direto no R36S (REQUER HEADERS DO KERNEL)
+## 🔧 Opção 3: Compilar Direto no R36S (REQUER HEADERS DO KERNEL)
 
 **Atenção**: Esta opção só funciona se você tiver os headers do kernel instalados no R36S (improvável em builds padrão).
 
@@ -67,7 +94,7 @@ O script vai:
 
 ---
 
-## 🛠️ Opção 3: Instalação Manual (PARA USUÁRIOS AVANÇADOS)
+## 🛠️ Opção 4: Instalação Manual (PARA USUÁRIOS AVANÇADOS)
 
 Se você já tem o módulo `rtl8188fu.ko` compilado:
 
