@@ -26,7 +26,7 @@ echo "Kernel version: ${KERNEL_VERSION}"
 DRIVER_SRC=rtl8188fu
 if [ ! -d "$DRIVER_SRC" ]; then
   echo "Cloning RTL8188FU driver..."
-  git clone --depth=1 https://github.com/kenvL/rtl8188fu.git $DRIVER_SRC
+  git clone --depth=1 https://github.com/kelebek333/rtl8188fu.git $DRIVER_SRC
 fi
 
 cd $DRIVER_SRC

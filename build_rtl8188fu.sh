@@ -9,7 +9,7 @@ echo "Building RTL8188FU WiFi driver..."
 
 # Clone the RTL8188FU driver repository if not already present
 if [ ! -d "$DRIVER_SRC" ]; then
-  git clone --depth=1 https://github.com/kenvL/rtl8188fu.git $DRIVER_SRC
+  git clone --depth=1 https://github.com/kelebek333/rtl8188fu.git $DRIVER_SRC
 fi
 
 cd $DRIVER_SRC

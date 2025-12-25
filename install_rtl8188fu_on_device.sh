@@ -42,7 +42,7 @@ if [ -d "$DRIVER_SRC" ]; then
 fi
 
 echo "Downloading RTL8188FU driver..."
-git clone --depth=1 https://github.com/kenvL/rtl8188fu.git $DRIVER_SRC
+git clone --depth=1 https://github.com/kelebek333/rtl8188fu.git $DRIVER_SRC
 cd $DRIVER_SRC
 
 # Build the driver
