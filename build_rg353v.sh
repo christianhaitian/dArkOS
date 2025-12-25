@@ -32,6 +32,7 @@ source ./prepare.sh
 source ./setup_partition-rk3566.sh
 source ./bootstrap_rootfs-rk3566.sh
 source ./build_kernel-rk3566.sh
+source ./build_rtl8188fu.sh
 source ./build_deps.sh
 source ./build_sdl2.sh
 source ./build_ppssppsa.sh

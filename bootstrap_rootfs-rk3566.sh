@@ -84,6 +84,10 @@ ATTRS{idVendor}==\"0cf3\", ATTRS{idProduct}==\"20ff\", RUN+=\"/usr/bin/eject '/d
 ATTR{idVendor}==\"0bda\", ATTR{idProduct}==\"1a2b\", RUN+=\"/usr/sbin/usb_modeswitch -K -v 0bda -p 1a2b\"
 ATTR{idVendor}==\"0bda\", ATTR{idProduct}==\"c811\", RUN+=\"/usr/sbin/usb_modeswitch -K -v 0bda -p c811\"
 
+# Realtek RTL8188FTV/RTL8188FU 802.11n USB WiFi Adapter
+#   Direct WiFi mode, no mode switching needed
+ATTRS{idVendor}==\"0bda\", ATTRS{idProduct}==\"f179\"
+
 LABEL=\"end_modeswitch\"" | sudo tee Arkbuild/etc/udev/rules.d/40-usb_modeswitch.rules
 sudo chroot Arkbuild/ sync
 sleep 5
