@@ -5,10 +5,6 @@
 
 ################################################################################
 
-source /opt/system/dialog.sh
-
-################################################################################
-
 # users, host, uptime, load, ip, cpu model
 USERS=$(who | wc -l)
 HOST=$(hostname)
@@ -162,7 +158,5 @@ $ROMS2_SPACE_NAME
 ├─Disk..: $ROMS2_SPACE_TOTAL
 ├─Used..: $ROMS2_SPACE_PCT - $ROMS2_SPACE_USED
 └─Free..: $ROMS2_SPACE_FREE"
-
-exit 0
 
 # END
