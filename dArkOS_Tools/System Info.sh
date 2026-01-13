@@ -5,12 +5,11 @@
 
 ################################################################################
 
-# users, host, uptime, load, ip, cpu model
+# users, host, uptime, load, cpu model
 USERS=$(who | wc -l)
 HOST=$(hostname)
 UPTIME=$(uptime -p)
 LOAD=$(cut -d' ' -f1-3 /proc/loadavg)
-IP=$(hostname -I | awk '{print $1}')
 CPU_MODEL=$(awk -F: '/model name|Hardware/ {print $2; exit}' /proc/cpuinfo | xargs)
 
 # load, srcds, screen pid
@@ -84,16 +83,8 @@ TOTAL_PCT=$((TOTAL_USED_MEM_MB * 100 / TOTAL_MEM_MB))
 
 # get primary network interface (skip loopback)
 NET_IFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -n1)
-
-# get RX and TX bytes in MB
-RX_BYTES=$(cat /sys/class/net/$NET_IFACE/statistics/rx_bytes)
-TX_BYTES=$(cat /sys/class/net/$NET_IFACE/statistics/tx_bytes)
-RX_MB=$(awk -v b="$RX_BYTES" 'BEGIN {printf "%.2f", b/1024/1024}')
-TX_MB=$(awk -v b="$TX_BYTES" 'BEGIN {printf "%.2f", b/1024/1024}')
-
-# network speed
-U=$(awk '{print int($1)}' /proc/uptime)
-read RX TX <<<$(awk -v i="$NET_IFACE" '$1 ~ i ":" {gsub(":","",$2); print $2, $10}' /proc/net/dev)
+# get ip address
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
 
 ################################################################################
 
@@ -127,9 +118,7 @@ Uptime..: $UPTIME
 Load....: $LOAD
 
 Network.: $NET_IFACE
-Address.: $IP
-Down....: ${RX_MB}MB $((RX / 1024 / U)) KB/s
-Up......: ${TX_MB}MB $((TX / 1024 / U)) KB/s
+Address.: $IP_ADDRESS
 
 CPU.....: $CPU_TYPE
 Model...: $CPU_MODEL
