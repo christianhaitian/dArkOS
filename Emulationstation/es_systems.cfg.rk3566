@@ -2563,7 +2563,19 @@
 		<manufacturer>Various</manufacturer>
 		<release>unknown</release>
 	</system>
+
+    <!- workaround of lack of printf "\033c" in ES menu -->
 	<system>
+            <name>options</name>
+            <fullname>Options</fullname>
+            <path>/opt/system/</path>
+            <extension>.sh .SH</extension>
+    		<command>sudo chmod 666 /dev/tty1; %ROM% 2>&1 > /dev/tty1; printf "\033c" >> /dev/tty1</command>
+            <platform>ignore</platform>
+            <theme>retropie</theme>
+    </system>
+
+    <system>
 		<name>retroarch</name>
 		<fullname>Retroarch</fullname>
 		<path>/opt/cmds/</path>
