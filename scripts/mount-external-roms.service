@@ -1,0 +1,11 @@
+[Unit]
+Description=Ensure external SD card EASYROMS is mounted at /roms on dual-SD devices
+After=local-fs.target
+Before=emulationstation.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mount-external-roms.sh
+
+[Install]
+WantedBy=multi-user.target

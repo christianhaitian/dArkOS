@@ -86,6 +86,12 @@ sudo cp scripts/firstboot.sh ${mountpoint}/firstboot.sh
 sudo cp scripts/firstboot.service Arkbuild/etc/systemd/system/firstboot.service
 sudo chroot Arkbuild/ bash -c "systemctl enable firstboot"
 
+# Add dual-SD external roms mount fix
+sudo cp scripts/mount-external-roms.sh Arkbuild/usr/local/bin/mount-external-roms.sh
+sudo chmod 755 Arkbuild/usr/local/bin/mount-external-roms.sh
+sudo cp scripts/mount-external-roms.service Arkbuild/etc/systemd/system/mount-external-roms.service
+sudo chroot Arkbuild/ bash -c "systemctl enable mount-external-roms"
+
 # Add hotkeydaemon service and python script
 sudo cp hotkeydaemon/killer_daemon.service Arkbuild/etc/systemd/system/killer_daemon.service
 sudo cp hotkeydaemon/killer_daemon.py Arkbuild/usr/local/bin/killer_daemon.py
