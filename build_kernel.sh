@@ -37,6 +37,24 @@ make ARCH=arm64 ${DEF_CONFIG}
 CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- ${KERNEL_CC:+CC="$KERNEL_CC"} modules_prepare
 CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- ${KERNEL_CC:+CC="$KERNEL_CC"} Image dtbs modules
 verify_action
+
+if [ "$UNIT" == "g350" ]; then
+  # The G350's single USB-C hangs off one PHY whose role is fixed per boot in
+  # the DTB: stock = host (USB drives / MIDI / wifi dongle), no gadget. Build
+  # both variants; the gadget one (SSH deploy link) ships as the default.
+  # Switch on device with usbmode.sh, or swap the files on the BOOT partition.
+  G350_DTS="arch/arm64/boot/dts/rockchip/rk3326-g350-linux.dts"
+  DTB_OUT="${G350_DTS%.dts}.dtb"
+  MAKE_DTBS="make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- ${KERNEL_CC:+CC=$KERNEL_CC} dtbs"
+  git checkout -- ${G350_DTS}   # pristine, in case a previous cached run patched it
+  ${MAKE_DTBS} && cp ${DTB_OUT} ${DTB_OUT}.host
+  verify_action
+  sed -i -e '/u2phy_host: host-port/,/}/ s/status = "okay"/status = "disabled"/' \
+         -e '/u2phy_otg: otg-port/,/}/ s/status = "disabled"/status = "okay"/' ${G350_DTS}
+  ${MAKE_DTBS} && cp ${DTB_OUT} ${DTB_OUT}.gadget
+  verify_action
+  git checkout -- ${G350_DTS}
+fi
 cd ..
 
 # Install kernel modules
@@ -56,6 +74,12 @@ KERNEL_VERSION=$(basename $(ls Arkbuild/lib/modules))
 sudo cp $KERNEL_SRC/.config Arkbuild/boot/config-${KERNEL_VERSION}
 sudo cp $KERNEL_SRC/arch/arm64/boot/Image ${mountpoint}/
 sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${KERNEL_DTB} ${mountpoint}/
+if [ "$UNIT" == "g350" ]; then
+  # Both USB-C role variants on /boot; gadget (deploy link) is the active one
+  sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${KERNEL_DTB}.host ${mountpoint}/
+  sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${KERNEL_DTB}.gadget ${mountpoint}/
+  sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${KERNEL_DTB}.gadget ${mountpoint}/${KERNEL_DTB}
+fi
 if [ "$UNIT" == "rg351mp" ] || [ "$UNIT" == "g350" ] || [ "$UNIT" == "a10mini" ]; then
   sudo cp /tmp/${UNIT}-uboot.dtb ${mountpoint}/rg351mp-uboot.dtb
   sudo rm /tmp/${UNIT}-uboot.dtb

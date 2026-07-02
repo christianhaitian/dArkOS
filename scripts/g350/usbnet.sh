@@ -8,6 +8,12 @@ set -e
 modprobe libcomposite
 modprobe usb_f_ecm
 
+# No UDC = the DTB booted the port in host role (see usbmode.sh) — nothing to do.
+if [ -z "$(ls /sys/class/udc 2>/dev/null)" ]; then
+  echo "usbnet: no UDC — USB-C is in host mode; run 'usbmode.sh gadget' for the deploy link"
+  exit 0
+fi
+
 G=/sys/kernel/config/usb_gadget/g350dev
 [ -d "$G" ] && exit 0   # already configured (service re-run)
 
