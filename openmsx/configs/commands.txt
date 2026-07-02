@@ -1,3 +1,0 @@
-plug joyporta keyjoystick1
-set maxframeskip 2
-set scale_factor 1

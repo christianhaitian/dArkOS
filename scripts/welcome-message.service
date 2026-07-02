@@ -2,7 +2,7 @@
 Description=Show custom boot welcome message
 DefaultDependencies=no
 After=local-fs.target firstboot.service
-Before=emulationstation.service
+Before=solis.service
 Conflicts=shutdown.target
 #ConditionKernelCommandLine=!quiet
 

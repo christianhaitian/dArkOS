@@ -1,6 +1,8 @@
 #!/bin/bash
-if mountpoint -q /roms; then
-  sudo umount /roms
+# First boot: expand the rootfs to fill the card and convert the data
+# partition (mmcblk0p3) to exfat, mounted at /data.
+if mountpoint -q /data; then
+  sudo umount /data
 fi
 sudo chmod 666 /dev/tty1
 export TERM=linux
@@ -15,7 +17,7 @@ fi
 if [ ! -f /boot/doneit ]; then
   sudo echo ", +" | sudo sfdisk -N 3 --force /dev/mmcblk0 &> /dev/null
   sudo touch "/boot/doneit"
-  dialog --infobox "EASYROMS partition expansion and conversion to exfat in process.  The device will now reboot to continue the process..." $height $width 2>&1 > /dev/tty1
+  dialog --infobox "Data partition expansion and conversion to exfat in process.  The device will now reboot to continue the process..." $height $width 2>&1 > /dev/tty1
   sleep 5
   sudo reboot
 fi
@@ -42,104 +44,44 @@ fi
 	  fi
 	  ext4endSector=$(sudo sfdisk -l /dev/mmcblk0 | grep mmcblk0p2 | awk '{print $3}')
 	  exfatstartSector=$(echo print 1+$ext4endSector | perl)
-	  echo 30
+	  echo 40
 	  printf "n\np\n3\n$exfatstartSector\n\nt\n3\n11\nw\n" | sudo fdisk /dev/mmcblk0 &> /dev/null
-	  echo 45
+	  echo 60
 	fi
 
-	sudo mkfs.exfat -c 16K -L EASYROMS /dev/mmcblk0p3 &> /dev/null
+	sudo mkfs.exfat -c 16K -L SOLISDATA /dev/mmcblk0p3 &> /dev/null
 	sync
-	echo 50
+	echo 75
 	sleep 2
 	sudo fsck.exfat -a /dev/mmcblk0p3 &> /dev/null
 	sync
-	echo 55
+	echo 85
 	printf "t\n3\n7\nw\n" | sudo fdisk /dev/mmcblk0 &> /dev/null
-	echo 60
-	sudo mount -t exfat -w /dev/mmcblk0p3 /roms &> /dev/null
+	sudo mkdir -p /data
+	sudo mount -t exfat -w /dev/mmcblk0p3 /data &> /dev/null
 	exitcode=$?
 	echo $exitcode > /tmp/code.txt
 	sleep 2
-	#sudo tar -xf /roms.tar -C / &> /dev/null
-	(pv -n /roms.tar | tar --no-same-permissions --no-same-owner --warning=no-timestamp -xf - -C /) &> /tmp/tar_stat.txt &
-	let COUNT=1
-	while true; do
-	  VAL=$(tail -n 1 /tmp/tar_stat.txt)
-	  if [[ "$VAL" == "100" ]]; then
-	   VAL_INT=$(awk "BEGIN {print ($VAL / 100) * 20 + 60}" 2> /dev/null | cut -d '.' -f1)
-	   echo $VAL_INT
-	   break
-	  elif [[ "$VAL" != "$SAMEVAL" ]]; then
-	   VAL_INT=$(awk "BEGIN {print ($VAL / 100) * 20 + 60}" 2> /dev/null | cut -d '.' -f1)
-	   echo $VAL_INT
-	   SAMEVAL="$VAL"
-	   continue
-	  elif [[ $COUNT -ge 15000 ]]; then
-	   echo "We're failing out for creating roms structure."
-	   break
-	  else
-	   let COUNT++
-	   continue
-	  fi
-	done
-	#echo 80
-	sync
-	sudo rm -rf /roms/themes/es-theme-nes-box/ &> /dev/null
-	cd /tempthemes
-	(tar --no-same-permissions --no-same-owner --warning=no-timestamp -cf - . | pv -n -s $(du -sb /tempthemes/ | awk '{print $1}') | tar --no-same-permissions --no-same-owner -xf - -C /roms/themes/) &> /tmp/tar_stat.txt &
-	let COUNT=1
-	while true; do
-	  VAL=$(tail -n 1 /tmp/tar_stat.txt)
-	  if [[ "$VAL" -ge "100" ]]; then
-	   VAL_INT_CP=$(awk "BEGIN {print ($VAL / 100) * 15 + 80}" 2> /dev/null | cut -d '.' -f1)
-	   echo $VAL_INT_CP
-	   break
-	  elif [[ "$VAL" != "$SAMEVAL" ]] && [[ ! -z "$VAL" ]]; then
-	   VAL_INT_CP=$(awk "BEGIN {print ($VAL / 100) * 15 + 80}" 2> /dev/null | cut -d '.' -f1)
-	   echo $VAL_INT_CP
-	   SAMEVAL="$VAL"
-	   continue
-	  elif [[ $COUNT -ge 15000 ]]; then
-	   echo "We're failing out for copying themes."
-	   break
-	  else
-	   let COUNT++
-	   continue
-	  fi
-	done
-	sync
-	#echo 95
-	sleep 1
-	cd ..
-	while true; do
-	  if [[ -z $(pidof tar) ]]; then
-		sudo rm -rf /tempthemes &> /dev/null
-		break
-	  fi
-	done
-	sleep 2
+	# SOLIS user data folders (samples to import, projects to manage).
+	sudo mkdir -p /data/SOLIS/samples /data/SOLIS/projects &> /dev/null
 	sudo cp -f /boot/fstab.exfat /etc/fstab &> /dev/null
 	sync
 	sudo rm -f /boot/doneit* &> /dev/null
-	if [ ! -f "/boot/rk3326-rg351v-linux.dtb" ] && [ ! -f "/boot/rk3326-rg351mp-linux.dtb" ] && [ ! -f "/boot/rk3326-g350-linux.dtb" ]; then
-	  sudo rm -f /roms.tar &> /dev/null
-	fi
 	sudo rm -f /boot/fstab.exfat &> /dev/null
 	echo 100
-) | dialog --title "Firstboot setup of dArkOS" --gauge "Expanding rootfs and exfat partitions.  Please wait..." $height $width 0 2>&1 > /dev/tty1
+) | dialog --title "Firstboot setup of SOLIS" --gauge "Expanding rootfs and data partitions.  Please wait..." $height $width 0 2>&1 > /dev/tty1
 
 exitcode=$(cat /tmp/code.txt)
 if [ "$exitcode" == "0" ]; then
-  dialog --infobox "Completed expansion of root filesystem and EASYROMS partition and conversion to exfat. The system will now reboot and load dArkOS." $height $width 2>&1 > /dev/tty1 | sleep 10
+  dialog --infobox "Completed expansion of root filesystem and data partition and conversion to exfat. The system will now reboot and load SOLIS." $height $width 2>&1 > /dev/tty1 | sleep 10
   systemctl disable firstboot.service &> /dev/null
   sudo rm /boot/firstboot.sh &> /dev/null
   sudo rm -- "$0"
   reboot
 else
-  dialog --infobox "EASYROMS partition expansion and conversion to exfat failed for an unknown reason.  Please expand the partition using an alternative tool such as Minitool Partition Wizard.  System will reboot and load dArkOS now." $height $width 2>&1 > /dev/tty1 | sleep 10
+  dialog --infobox "Data partition expansion and conversion to exfat failed for an unknown reason.  Please expand the partition using an alternative tool such as Minitool Partition Wizard.  System will reboot and load SOLIS now." $height $width 2>&1 > /dev/tty1 | sleep 10
   systemctl disable firstboot.service &> /dev/null
   sudo rm /boot/firstboot.sh &> /dev/null
   sudo rm -- "$0"
   reboot
 fi
-

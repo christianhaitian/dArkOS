@@ -2,11 +2,20 @@
 
 echo -e "Making sure necessary tools and ccache are available for the build....\n\n"
 # Ensure some build tools are installed and ready
-if [ -z $(dpkg --print-foreign-architectures | grep i386) ]; then
+HOST_ARCH=$(dpkg --print-architecture)
+# 32-bit x86 host libs only exist (and are only needed) on amd64 hosts.
+# On an arm64 host (e.g. Apple Silicon building natively) adding i386 fails.
+if [ "$HOST_ARCH" == "amd64" ] && [ -z $(dpkg --print-foreign-architectures | grep i386) ]; then
   sudo dpkg --add-architecture i386
 fi
 sudo apt -y update
-for NEEDED_TOOL in bc btrfs-progs build-essential bison flex ccache curl debconf-utils debootstrap device-tree-compiler dosfstools e2fsprogs eatmydata gcc gdisk jq lib32stdc++6 libc6-i386 libncurses5-dev libssl-dev lz4 lzop p7zip-full parted python-is-python3 qemu-user-static zlib1g:i386 xfsprogs
+NEEDED_TOOLS="bc btrfs-progs build-essential bison flex ccache curl debconf-utils debootstrap device-tree-compiler dosfstools e2fsprogs eatmydata gcc gdisk jq libncurses5-dev libssl-dev lz4 lzop p7zip-full parted python-is-python3 qemu-user-static xfsprogs"
+if [ "$HOST_ARCH" == "amd64" ]; then
+  # 32-bit x86 libs for the prebuilt Rockchip tools, plus the aarch64 GCC-12
+  # cross toolchain (newer GCC cannot build the old U-Boot / 4.4 BSP kernel).
+  NEEDED_TOOLS="${NEEDED_TOOLS} lib32stdc++6 libc6-i386 zlib1g:i386 binutils-aarch64-linux-gnu gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu"
+fi
+for NEEDED_TOOL in ${NEEDED_TOOLS}
 do
   apt list --installed 2>/dev/null | grep -q "$NEEDED_TOOL"
   if [[ $? != "0" ]]; then
@@ -14,6 +23,13 @@ do
     verify_action
   fi
 done
+
+# Make the unversioned aarch64 cross-compiler resolve to GCC 12 so U-Boot's
+# make.sh (which we cannot easily parameterize) builds with it too.
+if [ "$HOST_ARCH" == "amd64" ] && command -v aarch64-linux-gnu-gcc-12 >/dev/null 2>&1; then
+  sudo ln -sf /usr/bin/aarch64-linux-gnu-gcc-12 /usr/bin/aarch64-linux-gnu-gcc
+  sudo ln -sf /usr/bin/aarch64-linux-gnu-g++-12 /usr/bin/aarch64-linux-gnu-g++
+fi
 
 # Ensure apt-cacher-ng is installed and if enabled for the build
 if [[ "${ENABLE_CACHE}" == "y" ]]; then

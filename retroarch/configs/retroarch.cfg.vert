@@ -1,6 +1,0 @@
-input_player1_a_btn = "0"
-input_player1_b_btn = "1"
-input_player1_left_axis = "+3"
-input_player1_right_axis = "-3"
-input_player1_up_axis = "-2"
-input_player1_down_axis = "+2"

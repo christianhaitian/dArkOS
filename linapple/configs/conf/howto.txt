@@ -1,7 +1,0 @@
-./linapple --conf $GAMEDIR/conf/controller.conf
-
-./linapple --conf $GAMEDIR/conf/mouse.conf
-
-./linapple --conf $GAMEDIR/conf/numpad.conf
-
-./linapple --conf $GAMEDIR/conf/nojoy.conf

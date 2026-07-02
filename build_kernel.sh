@@ -21,10 +21,21 @@ fi
 if [ ! -d "$KERNEL_SRC" ]; then
   git clone --recursive --depth=1 https://github.com/christianhaitian/linux.git -b $KERNEL_SRC $KERNEL_SRC
 fi
+# The old RK3326 4.4 BSP kernel does not compile with GCC 13/14. Prefer the
+# aarch64 GCC-12 cross compiler if it is available; fall back gracefully.
+KERNEL_CC=""
+for cc in aarch64-linux-gnu-gcc-12 aarch64-linux-gnu-gcc-13 aarch64-linux-gnu-gcc; do
+  if command -v "$cc" >/dev/null 2>&1; then
+    KERNEL_CC="$cc"
+    break
+  fi
+done
+echo "Building kernel with CROSS_COMPILE=aarch64-linux-gnu- CC=${KERNEL_CC:-<default>}"
+
 cd $KERNEL_SRC
 make ARCH=arm64 ${DEF_CONFIG}
-CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
-CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs modules
+CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- ${KERNEL_CC:+CC="$KERNEL_CC"} modules_prepare
+CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- ${KERNEL_CC:+CC="$KERNEL_CC"} Image dtbs modules
 verify_action
 cd ..
 

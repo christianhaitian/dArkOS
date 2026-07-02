@@ -61,11 +61,10 @@ sleep 10
 echo -e "Generating /etc/fstab"
 echo -e "LABEL=ROOTFS / ${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_MOUNT_OPTIONS} 0 1
 LABEL=BOOT /boot vfat defaults 0 0
-LABEL=EASYROMS /roms vfat defaults,auto,umask=000,uid=1000,gid=1000,noatime 0 0" | sudo tee Arkbuild/etc/fstab
+LABEL=SOLISDATA /data vfat defaults,nofail,auto,umask=000,uid=1000,gid=1000,noatime 0 0" | sudo tee Arkbuild/etc/fstab
+sudo mkdir -p Arkbuild/data
 echo -e "Generating 10-standard.rules for udev"
 echo -e "# Rules
-KERNEL==\"mali0\", GROUP=\"video\", MODE=\"0660\"
-KERNEL==\"rga\", GROUP=\"video\", MODE=\"0660\"
 ACTION==\"add\", SUBSYSTEM==\"backlight\", RUN+=\"/bin/chgrp video /sys/class/backlight/%k/brightness\"
 ACTION==\"add\", SUBSYSTEM==\"backlight\", RUN+=\"/bin/chmod g+w /sys/class/backlight/%k/brightness\"" | sudo tee Arkbuild/etc/udev/rules.d/10-standard.rules
 echo -e "Generating 40-usb_modeswitch.rules for udev"

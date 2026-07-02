@@ -81,7 +81,7 @@ function setup_ark_user() {
   sudo chmod 0440 ${CHROOT_DIR}/etc/sudoers.d/ark-no-sudo-password
   sudo chmod 0440 ${CHROOT_DIR}/etc/sudoers.d/ark-no-secure-path
   sudo chroot ${CHROOT_DIR}/ usermod -G video,sudo,render,netdev,input,audio,adm,ark ark
-  directories=(".config" ".emulationstation")
+  directories=(".config")
   for dir in "${directories[@]}"; do
     sudo mkdir -p "${CHROOT_DIR}/home/ark/${dir}"
   done

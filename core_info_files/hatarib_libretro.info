@@ -1,8 +1,0 @@
-# Software Information
-display_name = "hatariB"
-authors = "Brad Smith"
-supported_extensions = "st|msa|dim|stx|ipf|ctr|m3u|m3u8|zip|zst|gz|acsi|ahd|vhd|scsi|shd|ide|gem"
-corename = "hatariB"
-license = "GPLv2"
-display_version = "v0.4 unstable preview"
-categories = "Emulator"

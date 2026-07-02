@@ -1,0 +1,11 @@
+[Unit]
+Description=USB ethernet gadget (SSH deploy link, 192.168.7.1)
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/usbnet.sh
+
+[Install]
+WantedBy=multi-user.target

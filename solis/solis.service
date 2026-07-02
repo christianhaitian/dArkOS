@@ -1,0 +1,24 @@
+[Unit]
+Description=SOLIS music tracker
+Documentation=https://github.com/Sinkopa-AV
+# Start once the base system, audio and (optionally) the network are up.
+After=multi-user.target sound.target alsa-restore.service
+Wants=sound.target
+# SOLIS owns the screen — take over tty1 from the login console.
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+User=ark
+Group=ark
+WorkingDirectory=/home/ark
+# /usr/local/bin/solis is the SOLIS binary (the build ships a placeholder;
+# replace it with the compiled Rust tracker). Fonts load from /data/SOLIS/fonts.
+ExecStart=/usr/local/bin/solis
+Restart=on-failure
+RestartSec=2
+# Framebuffer (video), buttons (input), and ALSA/MIDI (audio).
+SupplementaryGroups=video input audio
+
+[Install]
+WantedBy=multi-user.target

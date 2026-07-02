@@ -1,0 +1,98 @@
+#!/bin/bash
+# =============================================================================
+# SOLIS — placeholder launcher
+# =============================================================================
+# This stands in for the real Rust music-tracker binary so solis.service starts
+# cleanly on a fresh image. Replace /usr/local/bin/solis with the compiled SOLIS
+# binary (or a thin launcher that exec's it) when it is ready.
+#
+# Everything below is also a hand-off note for whoever wires up rendering/audio.
+#
+# -----------------------------------------------------------------------------
+# DISPLAY / COMPOSITOR
+# -----------------------------------------------------------------------------
+# There is NO compositor on this image: no X11, no Wayland, no EmulationStation,
+# and the Mesa / Mali (OpenGL ES) userspace has been removed. The screen is yours
+# from boot. systemd boots to multi-user.target (console only), so nothing else
+# is holding the framebuffer.
+#
+# Render targets available to SOLIS:
+#   * DRM / KMS  -> /dev/dri/card0   (use libdrm + GBM dumb buffers; the kernel
+#                   panel/DRM driver is kept. No GLES driver is installed, so do
+#                   software rendering into a dumb buffer, or ship your own GPU
+#                   userspace if you want acceleration.)
+#   * fbdev      -> /dev/fb0         (legacy framebuffer; simplest path for a 2D
+#                   tracker UI — mmap and blit.)
+#
+# Because no display server runs, SOLIS should open the DRM master / fb directly.
+# Set it up as the foreground console app (this service runs on the system, the
+# welcome-message service only writes a banner to tty1 before SOLIS starts).
+#
+# -----------------------------------------------------------------------------
+# AUDIO / MIDI
+# -----------------------------------------------------------------------------
+# Plain ALSA — no PulseAudio / PipeWire layer. Talk to ALSA directly:
+#   * PCM out   -> default / hw:0   (.asoundrc routes to the speaker/headphone)
+#   * MIDI      -> ALSA rawmidi (/dev/snd/midi*) and the ALSA sequencer
+#   * USB DAC / USB-MIDI hotplug is supported (see checknswitchforusbdac).
+# Packages present: alsa-utils, libasound2. The 'audio' and 'input' groups are
+# granted to the SOLIS service.
+#
+# -----------------------------------------------------------------------------
+# INPUT
+# -----------------------------------------------------------------------------
+# evdev is kept -> read /dev/input/event* directly (buttons / d-pad / keyboard).
+#
+# -----------------------------------------------------------------------------
+# RESOURCES FREED vs. the original gaming image  (rough estimates — confirm with
+# the live numbers this script prints below)
+# -----------------------------------------------------------------------------
+#   RAM at idle:  ~120-250 MB freed. EmulationStation alone idles around
+#                 60-120 MB RSS plus its SDL/GL context; removing it, RetroArch,
+#                 Kodi, the scraper, and samba/winbind frees the rest. On a 1 GB
+#                 RK3326 device that roughly doubles the memory SOLIS can use.
+#   CPU at idle:  background load drops from the ES UI + helper daemons (~5-15%
+#                 on the 4x Cortex-A35) to near 0%, so all four cores are
+#                 available for audio DSP / sequencing.
+#   Storage:      image shrinks by ~1.5-3 GB (no emulator cores, BIOS dirs,
+#                 themes, ROM scaffolding, Mesa/Mali blobs).
+#   Boot:         faster — no ES splash/theme load, fewer enabled services.
+# These are estimates from what was removed, not a benchmark; measure on-device.
+# =============================================================================
+
+echo "=================================================================="
+echo " SOLIS placeholder launcher"
+echo " host: $(hostname)    date: $(date)"
+echo "=================================================================="
+
+echo "--- Display / DRM ---"
+ls -l /dev/dri/ 2>/dev/null || echo "  no /dev/dri (DRM) nodes found"
+ls -l /dev/fb* 2>/dev/null || echo "  no /dev/fb* framebuffer found"
+
+echo "--- Audio (ALSA) ---"
+aplay -l 2>/dev/null || echo "  aplay not available"
+echo "--- MIDI (ALSA rawmidi) ---"
+amidi -l 2>/dev/null || echo "  no rawmidi ports"
+
+echo "--- Input (evdev) ---"
+ls /dev/input/event* 2>/dev/null || echo "  no /dev/input/event* found"
+
+echo "--- CPU ---"
+echo "  cores: $(nproc)   load:$(cut -d' ' -f1-3 /proc/loadavg 2>/dev/null)"
+grep -m1 -i 'model name\|Hardware' /proc/cpuinfo 2>/dev/null
+for p in /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor; do
+  [ -r "$p" ] && echo "  governor: $(cat "$p")"
+done
+
+echo "--- Memory (live headroom) ---"
+free -h 2>/dev/null || cat /proc/meminfo | grep -i 'MemTotal\|MemFree\|MemAvailable'
+
+echo "=================================================================="
+echo " Replace this file with the real SOLIS binary."
+echo "=================================================================="
+
+# Keep the service alive so systemd does not flap it; the real binary replaces
+# this idle loop.
+while true; do
+  sleep 3600
+done
