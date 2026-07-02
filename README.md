@@ -48,5 +48,44 @@ make a10mini
 - To build on a different Debian release, change `DEBIAN_CODE_NAME` in the Makefile or pass `DEBIAN_CODE_NAME=<release>` to `make`.
 - The third partition is created empty, labeled `SOLISDATA`, and converted to exfat and mounted at `/data` on first boot (alongside rootfs expansion).
 
+## First boot
+
+Flash the image to an SD card, insert, power on. First boot expands the rootfs and converts the `SOLISDATA` partition to exfat, reboots itself once, then starts SOLIS (the placeholder for now). No keyboard or login is ever needed on the device — its screen belongs to SOLIS.
+
+## Connecting (SSH over the USB-C cable)
+
+The image boots with the USB-C port in **gadget** mode: plug it into a Mac/PC and the device shows up as a network interface named "g350 Console" while it **charges over the same cable**.
+
+One-time Mac setup: System Settings → Network → g350 Console → Details → TCP/IP → Configure IPv4 **Manually**, IP `192.168.7.2`, mask `255.255.255.0`, no router.
+
+Then, from the Mac:
+
+```
+ssh ark@192.168.7.1        # password: ark — typed on the Mac, never on the handheld
+ssh-copy-id ark@192.168.7.1   # optional, once: no password ever again
+```
+
+## Deploying SOLIS
+
+Cross-compile for `aarch64-unknown-linux-gnu`, then:
+
+```
+scp target/aarch64-unknown-linux-gnu/release/solis ark@192.168.7.1:/tmp/solis
+ssh ark@192.168.7.1 'sudo systemctl stop solis && sudo mv /tmp/solis /usr/local/bin/solis && sudo systemctl start solis'
+```
+
+Logs: `ssh ark@192.168.7.1 journalctl -u solis -f`. Fonts and project data live on `/data/SOLIS` (the exfat partition — also readable by any computer via an SD reader).
+
+## USB-C roles
+
+The port does one role per boot (single PHY, no OTG negotiation on this board):
+
+| Mode | What works | Power |
+|------|-----------|-------|
+| `gadget` (default) | SSH/deploy link at 192.168.7.1 | device **charges** from the cable |
+| `host` | USB drives, class-compliant USB-MIDI keyboards, WiFi dongles | device **powers** the peripherals from its battery |
+
+Switch with `usbmode.sh host` / `usbmode.sh gadget` on the device (reboots to apply), or from any computer by copying `rk3326-g350-linux.dtb.host` or `.gadget` over `rk3326-g350-linux.dtb` on the FAT32 `BOOT` partition. Don't plug the device into a computer while in host mode — two hosts, no link, no charge.
+
 # Credits and Thanks
 Built on the work of [ArkOS](https://github.com/christianhaitian/arkos/wiki) and dArkOS by christianhaitian and contributors.
