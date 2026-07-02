@@ -1,5 +1,6 @@
 #!/bin/bash
 printf "\n"
-printf " * dArkOS Documentation:          https://github.com/christianhaitian/darkos/wiki\n"
+printf " * dArkOS-ultralight (SOLIS):    https://github.com/Sinkopa-AV/dArkOS-ultralight\n"
 printf " * Debian Reference:             https://www.debian.org/doc/manuals/debian-reference/index.en.html\n"
+printf " * USB-C role:                   usbmode.sh host|gadget    SOLIS logs: journalctl -u solis\n"
 printf "\n"

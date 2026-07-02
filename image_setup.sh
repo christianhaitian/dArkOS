@@ -4,7 +4,7 @@ echo -e "Setup the Image file...\n\n"
 
 # Image creation
 iName=`echo ${UNIT} | tr '[:lower:]' '[:upper:]'`
-DISK="dArkOS_${iName}_${DEBIAN_CODE_NAME}_${BUILD_DATE}.img"
+DISK="dArkOS-ultralight_${iName}_${DEBIAN_CODE_NAME}_${BUILD_DATE}.img"
 dd if=/dev/zero of="${DISK}" bs=1M count=0 seek="${DISK_SIZE}" conv=fsync
 parted -s "${DISK}" mklabel msdos
 parted -s "${DISK}" -a min unit s mkpart primary fat32 ${SYSTEM_PART_START} ${SYSTEM_PART_END}

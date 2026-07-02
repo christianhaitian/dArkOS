@@ -1,6 +1,6 @@
 #!/bin/bash
 printf "\n"
-printf "Welcome to dArkOS"
+printf "Welcome to dArkOS-ultralight — SOLIS base OS"
 printf "\n"
 printf "Based on $(cat /etc/os-release | grep -oP 'PRETTY_NAME="\K[^"]+') ($(uname -o) $(uname -rm))"
 printf "\n"

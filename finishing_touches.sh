@@ -127,8 +127,8 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-# Default set timezone to New York
-sudo chroot Arkbuild/ bash -c "ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime"
+# Default timezone
+sudo chroot Arkbuild/ bash -c "ln -sf /usr/share/zoneinfo/Europe/Riga /etc/localtime"
 
 # Copy performance scripts
 sudo cp scripts/perf* Arkbuild/usr/local/bin/

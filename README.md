@@ -2,7 +2,7 @@
 
 ### <p align="center">A stripped-down Debian image builder for RK3326 handhelds, repurposed as the base for the SOLIS Rust music tracker.</p>
 
-This project started life as [dArkOS](https://github.com/Sinkopa-AV/dArkOS-ultralight) (itself a Debian rebuild of [ArkOS](https://github.com/christianhaitian/arkos/wiki)). It has been reduced to a minimal base OS for the **SOLIS** music tracker. All of the retro-gaming stack has been removed.
+This project started life as [dArkOS](https://github.com/christianhaitian/dArkOS) by christianhaitian (itself a Debian rebuild of [ArkOS](https://github.com/christianhaitian/arkos/wiki)). It has been reduced to a minimal base OS for the **SOLIS** music tracker. All of the retro-gaming stack has been removed.
 
 ## What this image is
 
@@ -14,13 +14,13 @@ A small Debian (trixie) arm64 image for RK3326 devices that boots to a multi-use
 - ALSA + audio drivers, `.asoundrc` routing, USB DAC support
 - Display / DRM (KMS) drivers
 - evdev input drivers
-- WiFi firmware (rtl8723ds + `firmware-mediatek`) and NetworkManager
+- WiFi firmware (rtl8723ds + `firmware-mediatek`, for USB dongles — the G350 has no onboard WiFi) and NetworkManager
 - systemd (stripped down) + SSH (enabled)
 
 ### Added
-- **SOLIS** as a systemd service (`solis.service`) — currently a placeholder launcher at `/usr/local/bin/solis`. Replace that file with the real Rust binary.
-- MIDI dependencies: `libasound2`, `alsa-utils`
-- Rust runtime: `rustc`, `cargo`
+- **SOLIS** as a systemd service (`solis.service`) — currently a placeholder launcher at `/usr/local/bin/solis`. Replace that file with the real Rust binary (cross-compiled; no toolchain ships on-device).
+- Audio/MIDI runtime: `libasound2`, `alsa-utils`, `libsdl2-2.0-0` (SOLIS's audio path)
+- **USB-C deploy link** (g350): `usbnet.service` brings up a CDC-ECM gadget at boot — device is `192.168.7.1`, `ssh ark@192.168.7.1` (password `ark`). The port has one role per boot: `usbmode.sh host|gadget` switches between the deploy link (default) and USB host mode (drives / MIDI keyboards / WiFi dongles), or copy `rk3326-g350-linux.dtb.host` / `.gadget` over `rk3326-g350-linux.dtb` on the BOOT partition from any computer.
 
 ### Removed
 - EmulationStation, RetroArch + all emulator cores, every standalone emulator
