@@ -1,6 +1,7 @@
 #!/bin/bash
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
-. /usr/local/bin/buttonmon.sh
+. /usr/local/bin/buttonmon.sh 2>/dev/null
 
 if [ -e "/home/ark/.config/.MBROLA_VOICE_FEMALE" ]; then
   voice="1"
@@ -10,16 +11,25 @@ else
   voice="2"
 fi
 
+speak() {
+  local msg="$1"
+  if [ "$(id -u)" -eq 0 ] && command -v runuser >/dev/null 2>&1; then
+    runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "$msg" 2>/dev/null || espeak-ng -s130 "$msg" 2>/dev/null
+  else
+    espeak-ng -vmb-us${voice} -s130 "$msg" 2>/dev/null || espeak-ng -s130 "$msg" 2>/dev/null
+  fi
+}
+
 if [ -f "/boot/rk3326-rg351v-linux.dtb" ] || [ -f "/boot/rk3326-gameforce-linux.dtb" ] || [ -f "/boot/rk3326-odroidgo2-linux.dtb" ] || [ -f "/boot/rk3326-odroidgo2-linux-v11.dtb" ]; then
-  Test_Button_R1
+  Test_Button_R1 2>/dev/null
 else
-  Test_Button_R2
+  Test_Button_R2 2>/dev/null
 fi
+
 if [ "$?" -eq "10" ] && [[ -z "$@" ]]; then
-  echo $(ps -o comm= -p $PPID)
-  runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "The current performance governor is $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor)"
-  if [[ $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor) == "userspace" ]]; then
-    runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "CPU speed is currently $(awk 'length==6{printf("%.0f MHz\n", $0/10^3); next} length==7{printf("%.1f GHz\n", $0/10^6)}' /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq)" &
+  speak "The current performance governor is $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor 2>/dev/null)"
+  if [[ $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor 2>/dev/null) == "userspace" ]]; then
+    speak "CPU speed is currently $(awk 'length==6{printf("%.0f MHz\n", $0/10^3); next} length==7{printf("%.1f GHz\n", $0/10^6)}' /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq 2>/dev/null)" &
   fi
 else
   if [[ -f /tmp/battery.percent ]]; then
@@ -27,17 +37,20 @@ else
   else
     BAT_FILE="/sys/class/power_supply/battery/capacity"
   fi
+  bat_val=$(cat "$BAT_FILE" 2>/dev/null | tr -dc '0-9')
+  [ -z "$bat_val" ] && bat_val="unknown"
+
   if [[ ! -z "$@" ]]; then
-    runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "${@} $(cat $BAT_FILE) percent"
+    speak "${@} $bat_val percent"
   else
-    runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "Your battery level is at $(cat $BAT_FILE) percent"
+    speak "Your battery level is at $bat_val percent"
   fi
 
-  Test_Button_R2
+  Test_Button_R2 2>/dev/null
   if [ "$?" -eq "10" ]; then
-    runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "The current performance governor is $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor)"
-    if [[ $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor) == "userspace" ]]; then
-      runuser -u ark -- espeak-ng -vmb-us${voice} -s130 "CPU speed is currently $(awk 'length==6{printf("%.0f MHz\n", $0/10^3); next} length==7{printf("%.1f GHz\n", $0/10^6)}' /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq)" &
+    speak "The current performance governor is $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor 2>/dev/null)"
+    if [[ $(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_governor 2>/dev/null) == "userspace" ]]; then
+      speak "CPU speed is currently $(awk 'length==6{printf("%.0f MHz\n", $0/10^3); next} length==7{printf("%.1f GHz\n", $0/10^6)}' /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq 2>/dev/null)" &
     fi
   fi
 fi
