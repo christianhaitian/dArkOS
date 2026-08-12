@@ -1,5 +1,5 @@
 #!/bin/bash
-# Switch Global Hotkey Tool for dArkOS
+# Switch Global Hotkey Tool for dArkOS with i18n support
 # Allows interactive button detection (press any button) or selecting presets
 
 sudo chmod 666 /dev/tty1 2>/dev/null
@@ -7,7 +7,7 @@ export TERM=linux
 export XDG_RUNTIME_DIR=/run/user/$UID/
 
 height="16"
-width="58"
+width="62"
 
 if compgen -G "/boot/rk3566*" > /dev/null; then
   if test ! -z "$(cat /home/ark/.config/.DEVICE | grep RGB20PRO | tr -d '\0')"
@@ -17,10 +17,64 @@ if compgen -G "/boot/rk3566*" > /dev/null; then
     sudo setfont /usr/share/consolefonts/Lat7-TerminusBold28x14.psf.gz
   fi
   height="20"
-  width="60"
+  width="66"
 else
   sudo setfont /usr/share/consolefonts/Lat7-TerminusBold22x11.psf.gz 2>/dev/null || sudo setfont /usr/share/consolefonts/Lat7-Terminus16.psf.gz
 fi
+
+# Detect system / EmulationStation language
+get_language() {
+  local lang
+  if [ -f "/home/ark/.emulationstation/es_settings.cfg" ]; then
+    lang=$(grep '<string name="Language"' /home/ark/.emulationstation/es_settings.cfg 2>/dev/null | sed -n 's/.*value="\([^"]*\)".*/\1/p' | tr '[:upper:]' '[:lower:]')
+  fi
+  if [ -z "$lang" ] && [ -f "/home/ark/.config/.LANGUAGE" ]; then
+    lang=$(cat /home/ark/.config/.LANGUAGE 2>/dev/null | tr -dc 'a-zA-Z_' | tr '[:upper:]' '[:lower:]')
+  fi
+  [ -z "$lang" ] && lang="${LANG:0:2}"
+  [ -z "$lang" ] && lang="en"
+  echo "${lang:0:2}"
+}
+
+LANG_CODE=$(get_language)
+
+# i18n Strings
+case "$LANG_CODE" in
+  pl)
+    T_TITLE="Menedzer Globalnego Klawisza Hotkey"
+    T_CUR="Aktualny Hotkey"
+    T_NOT_SET="Nie ustawiono"
+    T_MENU="Wybierz konfiguracje Hotkey:"
+    T_OPT_DETECT="1. Nacisnij klawisz, aby ustawic (Auto-wykrywanie)"
+    T_OPT_FN="2. Przycisk FN (Button 16 - Domyslny R36S)"
+    T_OPT_SEL="3. Przycisk SELECT (Button 12 - Klasyczny ArkOS)"
+    T_OPT_R3="4. Przycisk R3 (Button 15 - Klik prawej galki)"
+    T_OPT_EXIT="5. Wyjscie"
+    T_EXIT_BTN="Wyjscie"
+    T_WAIT_PRESS="--- Nacisnij wybrany przycisk Hotkey ---\n\nNacisnij przycisk na konsoli, ktory ma byc klawiszem funkcyjnym (np. FN, SELECT, MENU, R3)...\n\nOczekiwanie do 15 sekund..."
+    T_TIMEOUT="Nie wykryto nacisniecia przycisku (Timeout).\nSprobuj ponownie."
+    T_CONFIRM="Wykryto przycisk:\n  Nazwa: %s\n  ID Przycisku: %s\n  Kod Linux: %s\n  Urzadzenie: %s\n\nCzy chcesz ustawic ten przycisk jako Globalny Hotkey?"
+    T_SETTING="Ustawianie Hotkey na %s...\nProsze czekac..."
+    T_SUCCESS="Hotkey zostal pomyslnie zmieniony!\n\nNowy Hotkey: %s\nID Przycisku: %s\n\n- W grach: %s + X (Menu), %s + START (Wyjscie)\n- Jasnosc: %s + VOL UP / DOWN"
+    ;;
+  *)
+    T_TITLE="dArkOS Global Hotkey Manager"
+    T_CUR="Current Hotkey"
+    T_NOT_SET="Not Set"
+    T_MENU="Select Hotkey Configuration:"
+    T_OPT_DETECT="1. Press a button to set as Hotkey (Interactive Detect)"
+    T_OPT_FN="2. Set to FN Button (Button 16 - R36S Default)"
+    T_OPT_SEL="3. Set to SELECT Button (Button 12 - ArkOS Classic)"
+    T_OPT_R3="4. Set to R3 Button (Button 15 - Right Stick Click)"
+    T_OPT_EXIT="5. Exit"
+    T_EXIT_BTN="Exit"
+    T_WAIT_PRESS="--- Press Desired Hotkey Button ---\n\nPlease press the button on your console that you want to use as the Hotkey (e.g. FN, SELECT, MENU, R3)...\n\nWaiting up to 15 seconds..."
+    T_TIMEOUT="No button press was detected (Timeout).\nPlease try again."
+    T_CONFIRM="Detected Button:\n  Name: %s\n  Button ID: %s\n  Linux Code: %s\n  Device: %s\n\nSet this button as your Global Hotkey?"
+    T_SETTING="Setting Hotkey to %s...\nPlease wait..."
+    T_SUCCESS="Hotkey successfully configured!\n\nNew Hotkey: %s\nButton ID: %s\n\n- In-game: %s + X (Menu), %s + START (Exit)\n- Brightness: %s + VOL UP / DOWN"
+    ;;
+esac
 
 start_controls() {
   if [[ -z $(pgrep -f gptokeyb) ]]; then
@@ -45,10 +99,8 @@ clean_exit() {
   exit 0
 }
 
-# Start controls on script launch
 start_controls
 
-# Determine current hotkey
 get_current_hotkey_name() {
   local ra_hk
   ra_hk=$(grep "^input_enable_hotkey_btn" /home/ark/.config/retroarch/retroarch.cfg 2>/dev/null | cut -d '"' -f 2)
@@ -61,18 +113,20 @@ get_current_hotkey_name() {
   elif [ ! -z "$ra_hk" ]; then
     echo "Button $ra_hk"
   else
-    echo "Not Set"
+    echo "$T_NOT_SET"
   fi
 }
 
 apply_hotkey() {
   local btn_id="$1"
   local btn_name="$2"
-  local ogage_code="$3"   # e.g. 0x2c4, 0x2c0, 0x2c3
+  local ogage_code="$3"
 
-  dialog --infobox "\nSetting Hotkey to $btn_name...\nPlease wait..." 6 $width > /dev/tty1
+  local info_msg
+  info_msg=$(printf "$T_SETTING" "$btn_name")
+  dialog --infobox "\n$info_msg" 6 $width > /dev/tty1
 
-  # 1. Update RetroArch and RetroArch32 configs
+  # 1. Update RetroArch configs
   for rcfg in /home/ark/.config/retroarch/retroarch.cfg /home/ark/.config/retroarch32/retroarch.cfg; do
     if [ -f "$rcfg" ]; then
       sed -i "s/^input_enable_hotkey_btn = .*/input_enable_hotkey_btn = \"$btn_id\"/" "$rcfg"
@@ -88,7 +142,7 @@ apply_hotkey() {
     fi
   done
 
-  # 3. Patch ogage binary for brightness modifier
+  # 3. Patch ogage binary
   if [ -f "/usr/local/bin/ogage" ] && [ ! -z "$ogage_code" ]; then
     python3 -c "
 import os, subprocess
@@ -134,14 +188,15 @@ if count > 0:
   # 4. Restart EmulationStation
   sudo systemctl restart emulationstation > /dev/null 2>&1
 
-  dialog --msgbox "\nHotkey successfully configured!\n\nNew Hotkey: $btn_name\nButton ID: $btn_id\n\n- In-game: $btn_name + X (Menu), $btn_name + START (Exit)\n- Brightness: $btn_name + VOL UP / DOWN" 12 $width > /dev/tty1
+  local succ_msg
+  succ_msg=$(printf "$T_SUCCESS" "$btn_name" "$btn_id" "$btn_name" "$btn_name" "$btn_name")
+  dialog --msgbox "\n$succ_msg" 12 $width > /dev/tty1
 }
 
 detect_interactive() {
-  # Stop gptokeyb so raw button press can be caught
   stop_controls
 
-  dialog --infobox "\n--- Press Desired Hotkey Button ---\n\nPlease press the button on your console\nthat you want to use as the Hotkey\n(e.g. FN, SELECT, MENU, R3)...\n\nWaiting up to 15 seconds..." 10 $width > /dev/tty1
+  dialog --infobox "\n$T_WAIT_PRESS" 10 $width > /dev/tty1
 
   DETECT_JSON="/tmp/detected_hotkey.json"
   rm -f "$DETECT_JSON"
@@ -203,12 +258,10 @@ def detect():
 detect()
 "
   status=$?
-
-  # Restart controls for navigation
   start_controls
 
   if [ $status -ne 0 ] || [ ! -f "$DETECT_JSON" ]; then
-    dialog --msgbox "\nNo button press was detected (Timeout).\nPlease try again." 7 $width > /dev/tty1
+    dialog --msgbox "\n$T_TIMEOUT" 7 $width > /dev/tty1
     return
   fi
 
@@ -217,7 +270,10 @@ detect()
   detected_hex=$(python3 -c "import json; d=json.load(open('$DETECT_JSON')); print(d['hex_code'])" 2>/dev/null)
   detected_dev=$(python3 -c "import json; d=json.load(open('$DETECT_JSON')); print(d['device'])" 2>/dev/null)
 
-  dialog --yesno "\nDetected Button:\n  Name: $detected_name\n  Button ID: $detected_id\n  Linux Code: $detected_hex\n  Device: $detected_dev\n\nSet this button as your Global Hotkey?" 12 $width > /dev/tty1
+  local conf_msg
+  conf_msg=$(printf "$T_CONFIRM" "$detected_name" "$detected_id" "$detected_hex" "$detected_dev")
+
+  dialog --yesno "\n$conf_msg" 13 $width > /dev/tty1
   if [ $? -eq 0 ]; then
     apply_hotkey "$detected_id" "$detected_name" "$detected_hex"
   fi
@@ -227,20 +283,20 @@ while true; do
   cur_hk=$(get_current_hotkey_name)
   
   options=(
-    1 "Press a button to set as Hotkey (Interactive Detect)"
-    2 "Set to FN Button (Button 16 - R36S Default)"
-    3 "Set to SELECT Button (Button 12 - ArkOS Classic)"
-    4 "Set to R3 Button (Button 15 - Right Stick Click)"
-    5 "Exit"
+    1 "$T_OPT_DETECT"
+    2 "$T_OPT_FN"
+    3 "$T_OPT_SEL"
+    4 "$T_OPT_R3"
+    5 "$T_OPT_EXIT"
   )
 
   selection=(dialog \
-    --backtitle "dArkOS Global Hotkey Manager" \
-    --title "Current Hotkey: $cur_hk" \
+    --backtitle "$T_TITLE" \
+    --title "$T_CUR: $cur_hk" \
     --no-collapse \
     --clear \
-    --cancel-label "Exit" \
-    --menu "Select Hotkey Configuration:" $height $width 15)
+    --cancel-label "$T_EXIT_BTN" \
+    --menu "$T_MENU" $height $width 15)
 
   choice=$("${selection[@]}" "${options[@]}" 2>&1 > /dev/tty1)
   if [ $? -ne 0 ]; then

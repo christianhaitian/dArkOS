@@ -1,5 +1,5 @@
 #!/bin/bash
-# Low Battery Suspend Configuration Tool for dArkOS
+# Low Battery Suspend Configuration Tool for dArkOS with i18n support
 # Manages automatic suspend when battery drops below safety threshold
 
 sudo chmod 666 /dev/tty1 2>/dev/null
@@ -7,7 +7,7 @@ export TERM=linux
 export XDG_RUNTIME_DIR=/run/user/$UID/
 
 height="15"
-width="55"
+width="58"
 
 if compgen -G "/boot/rk3566*" > /dev/null; then
   if test ! -z "$(cat /home/ark/.config/.DEVICE | grep RGB20PRO | tr -d '\0')"
@@ -17,10 +17,68 @@ if compgen -G "/boot/rk3566*" > /dev/null; then
     sudo setfont /usr/share/consolefonts/Lat7-TerminusBold28x14.psf.gz
   fi
   height="20"
-  width="60"
+  width="66"
 else
   sudo setfont /usr/share/consolefonts/Lat7-TerminusBold22x11.psf.gz 2>/dev/null || sudo setfont /usr/share/consolefonts/Lat7-Terminus16.psf.gz
 fi
+
+# Detect system / EmulationStation language
+get_language() {
+  local lang
+  if [ -f "/home/ark/.emulationstation/es_settings.cfg" ]; then
+    lang=$(grep '<string name="Language"' /home/ark/.emulationstation/es_settings.cfg 2>/dev/null | sed -n 's/.*value="\([^"]*\)".*/\1/p' | tr '[:upper:]' '[:lower:]')
+  fi
+  if [ -z "$lang" ] && [ -f "/home/ark/.config/.LANGUAGE" ]; then
+    lang=$(cat /home/ark/.config/.LANGUAGE 2>/dev/null | tr -dc 'a-zA-Z_' | tr '[:upper:]' '[:lower:]')
+  fi
+  [ -z "$lang" ] && lang="${LANG:0:2}"
+  [ -z "$lang" ] && lang="en"
+  echo "${lang:0:2}"
+}
+
+LANG_CODE=$(get_language)
+
+# i18n Strings
+case "$LANG_CODE" in
+  pl)
+    T_TITLE="Ochrona Baterii dArkOS"
+    T_STATUS_LABEL="Status"
+    T_ACTIVE="Aktywna (Prog: %s%%)"
+    T_DISABLED="Wylaczona"
+    T_MENU="Wybierz opcje ochrony baterii:"
+    T_OPT_5="1. Wlacz / Ustaw prog na 5% (Zalecane)"
+    T_OPT_10="2. Wlacz / Ustaw prog na 10%"
+    T_OPT_15="3. Wlacz / Ustaw prog na 15%"
+    T_OPT_DIS="4. Wylacz usypianie przy niskiej baterii"
+    T_OPT_TEST="5. Testuj usypianie teraz (Natychmiastowy sen)"
+    T_OPT_EXIT="6. Wyjscie"
+    T_EXIT_BTN="Wyjscie"
+    T_CONFIGURING="Konfigurowanie usypiania przy niskiej baterii (%s%%)...\nProsze czekac..."
+    T_ENABLED_MSG="Usypianie przy niskiej baterii zostalo wlaczone!\n\n- Prog: %s%%\n- Sprawdzanie co 30s (po 3 niskich odczytach)\n- Automatycznie usypia konsole, chroniac przed naglym rozladowaniem"
+    T_DISABLING="Wylaczanie ochrony baterii...\nProsze czekac..."
+    T_DISABLED_MSG="Usypianie przy niskiej baterii zostalo wylaczone."
+    T_TEST_PROMPT="Czy chcesz przetestowac natychmiastowe usypianie?\n\nAby wybudzic konsole, nacisnij przycisk POWER."
+    ;;
+  *)
+    T_TITLE="dArkOS Low Battery Protection"
+    T_STATUS_LABEL="Status"
+    T_ACTIVE="Active (Threshold: %s%%)"
+    T_DISABLED="Disabled"
+    T_MENU="Select battery protection option:"
+    T_OPT_5="1. Enable / Set Threshold to 5% (Recommended)"
+    T_OPT_10="2. Enable / Set Threshold to 10%"
+    T_OPT_15="3. Enable / Set Threshold to 15%"
+    T_OPT_DIS="4. Disable Low Battery Suspend"
+    T_OPT_TEST="5. Test Suspend Now (Instant Sleep)"
+    T_OPT_EXIT="6. Exit"
+    T_EXIT_BTN="Exit"
+    T_CONFIGURING="Configuring Low Battery Suspend (%s%%)...\nPlease wait..."
+    T_ENABLED_MSG="Low Battery Suspend enabled!\n\n- Threshold: %s%%\n- Checks every 30s (triggers after 3 readings)\n- Automatically suspends console safely to prevent abrupt power loss"
+    T_DISABLING="Disabling Low Battery Suspend...\nPlease wait..."
+    T_DISABLED_MSG="Low Battery Suspend has been disabled."
+    T_TEST_PROMPT="Would you like to test instant suspend now?\n\nPress Power button to wake the console."
+    ;;
+esac
 
 # Controls for dialog
 if [[ -z $(pgrep -f gptokeyb) ]]; then
@@ -49,15 +107,17 @@ get_status() {
     local thr
     thr=$(cat "$CONF" 2>/dev/null | tr -dc '0-9')
     [ -z "$thr" ] && thr=5
-    echo "Active (Threshold: ${thr}%)"
+    printf "$T_ACTIVE" "$thr"
   else
-    echo "Disabled"
+    echo "$T_DISABLED"
   fi
 }
 
 install_daemon() {
   local thr="$1"
-  dialog --infobox "\nConfiguring Low Battery Suspend (${thr}%)...\nPlease wait..." 6 $width > /dev/tty1
+  local info_msg
+  info_msg=$(printf "$T_CONFIGURING" "$thr")
+  dialog --infobox "\n$info_msg" 6 $width > /dev/tty1
 
   echo "$thr" > "$CONF"
   chown ark:ark "$CONF" 2>/dev/null
@@ -136,19 +196,21 @@ EOF
   sudo systemctl enable lowbatt-suspend.service > /dev/null 2>&1
   sudo systemctl restart lowbatt-suspend.service
 
-  dialog --msgbox "\nLow Battery Suspend enabled!\n\n- Threshold: ${thr}%\n- Checks every 30s (triggers after 3 readings)\n- Automatically suspends console safely to prevent abrupt power loss" 10 $width > /dev/tty1
+  local succ_msg
+  succ_msg=$(printf "$T_ENABLED_MSG" "$thr")
+  dialog --msgbox "\n$succ_msg" 10 $width > /dev/tty1
 }
 
 disable_daemon() {
-  dialog --infobox "\nDisabling Low Battery Suspend...\nPlease wait..." 5 $width > /dev/tty1
+  dialog --infobox "\n$T_DISABLING" 5 $width > /dev/tty1
   sudo systemctl disable --now lowbatt-suspend.service > /dev/null 2>&1
   sudo rm -f "$UNIT" "$PROG"
   sudo systemctl daemon-reload
-  dialog --msgbox "\nLow Battery Suspend has been disabled." 7 $width > /dev/tty1
+  dialog --msgbox "\n$T_DISABLED_MSG" 7 $width > /dev/tty1
 }
 
 test_suspend() {
-  dialog --yesno "\nWould you like to test instant suspend now?\n\nPress Power button to wake the console." 8 $width > /dev/tty1
+  dialog --yesno "\n$T_TEST_PROMPT" 8 $width > /dev/tty1
   if [ $? -eq 0 ]; then
     sync
     sudo systemctl suspend
@@ -159,21 +221,21 @@ while true; do
   cur_stat=$(get_status)
   
   options=(
-    1 "Enable / Set Threshold to 5% (Recommended)"
-    2 "Enable / Set Threshold to 10%"
-    3 "Enable / Set Threshold to 15%"
-    4 "Disable Low Battery Suspend"
-    5 "Test Suspend Now (Instant Sleep)"
-    6 "Exit"
+    1 "$T_OPT_5"
+    2 "$T_OPT_10"
+    3 "$T_OPT_15"
+    4 "$T_OPT_DIS"
+    5 "$T_OPT_TEST"
+    6 "$T_OPT_EXIT"
   )
 
   selection=(dialog \
-    --backtitle "dArkOS Low Battery Protection" \
-    --title "Status: $cur_stat" \
+    --backtitle "$T_TITLE" \
+    --title "$T_STATUS_LABEL: $cur_stat" \
     --no-collapse \
     --clear \
-    --cancel-label "Exit" \
-    --menu "Select an option:" $height $width 15)
+    --cancel-label "$T_EXIT_BTN" \
+    --menu "$T_MENU" $height $width 15)
 
   choice=$("${selection[@]}" "${options[@]}" 2>&1 > /dev/tty1)
   if [ $? -ne 0 ]; then
