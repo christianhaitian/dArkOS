@@ -39,9 +39,8 @@ while true; do
     logger -t lowbatt "battery ${cap}%, threshold ${thr}%, count ${low_count}/${NEEDED}"
     if [ "$low_count" -ge "$NEEDED" ]; then
       logger -t lowbatt "suspending console at ${cap}% battery"
-      # Voice warning announcement
-      /usr/local/bin/speak_bat_life.sh critical_suspend >/dev/null 2>&1 &
-      sleep 4
+      # Play voice warning and suspend immediately when finished
+      /usr/local/bin/speak_bat_life.sh critical_suspend
       sync
       /bin/systemctl suspend
       low_count=0
