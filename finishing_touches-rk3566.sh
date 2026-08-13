@@ -248,6 +248,18 @@ fi
 sudo cp scripts/audiostate.service Arkbuild/etc/systemd/system/audiostate.service
 sudo chroot Arkbuild/ bash -c "systemctl enable audiostate"
 
+# Add the PortMaster hooks.  The PortMaster installer wipes the control folder,
+# so they are kept in the rootfs and copied back in on boot and after every install.
+sudo mkdir -p Arkbuild/usr/local/bin
+sudo mkdir -p Arkbuild/usr/local/share/dArkOS/portmaster
+sudo cp portmaster/*.txt Arkbuild/usr/local/share/dArkOS/portmaster/
+sudo cp scripts/portmaster-hooks.sh Arkbuild/usr/local/bin/portmaster-hooks.sh
+sudo chmod 777 Arkbuild/usr/local/bin/portmaster-hooks.sh
+sudo cp scripts/portmaster-hooks.service Arkbuild/etc/systemd/system/portmaster-hooks.service
+sudo cp scripts/portmaster-hooks.path Arkbuild/etc/systemd/system/portmaster-hooks.path
+sudo chroot Arkbuild/ bash -c "systemctl enable portmaster-hooks.service"
+sudo chroot Arkbuild/ bash -c "systemctl enable portmaster-hooks.path"
+
 # Copy various other backend tools
 sudo cp -R scripts/.asoundbackup/ Arkbuild/usr/local/bin/
 sudo cp scripts/round_end.wav Arkbuild/usr/local/bin/
