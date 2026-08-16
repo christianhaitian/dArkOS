@@ -97,6 +97,10 @@ sudo cp scripts/firstboot.sh ${mountpoint}/firstboot.sh
 sudo cp scripts/firstboot.service Arkbuild/etc/systemd/system/firstboot.service
 sudo chroot Arkbuild/ bash -c "systemctl enable firstboot"
 
+# Raise block device read-ahead for the large sequential reads on /roms.
+sudo mkdir -p Arkbuild/etc/udev/rules.d
+sudo cp scripts/60-darkos-readahead.rules Arkbuild/etc/udev/rules.d/60-darkos-readahead.rules
+
 # Add hotkeydaemon service and python script
 sudo cp hotkeydaemon/killer_daemon.service Arkbuild/etc/systemd/system/killer_daemon.service
 sudo cp hotkeydaemon/killer_daemon.py Arkbuild/usr/local/bin/killer_daemon.py

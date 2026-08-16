@@ -49,6 +49,8 @@ else
   sudo cp audio/.asoundrcbak.${CHIPSET} Arkbuild/home/ark/.asoundrcbak
 fi
 sudo cp audio/99-hdmi-audio.rules Arkbuild/etc/udev/rules.d/99-hdmi-audio.rules
+# Raise block device read-ahead for the large sequential reads on /roms.
+sudo cp scripts/60-darkos-readahead.rules Arkbuild/etc/udev/rules.d/60-darkos-readahead.rules
 sudo cp audio/.asoundrchdmi Arkbuild/home/ark/.asoundrchdmi
 sudo cp audio/.asoundrcbt.${CHIPSET} Arkbuild/home/ark/.asoundrcbt
 sudo cp audio/audio-switch.sh Arkbuild/usr/local/bin/audio-switch.sh

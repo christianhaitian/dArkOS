@@ -1,0 +1,9 @@
+# Raise read-ahead from the kernel default of 128 KB to 512 KB on non-rotational
+# block devices.  The large sequential readers on these units - PSP/PS1/Dreamcast
+# disc images, .chd - live on /roms, and 128 KB turns one such read into far more
+# short SD bus transactions than 512 KB would.  512 and not 1024 because on a 1 GB
+# RK3326 every extra megabyte of page cache is one taken from the emulator.
+# The 60- prefix is what puts it after 10-standard.rules - udev(7), RULES FILES:
+# "All rules files are collectively sorted and processed in lexicographic order,
+# regardless of the directories in which they live."
+ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/read_ahead_kb}="512"
