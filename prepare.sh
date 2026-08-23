@@ -45,5 +45,23 @@ if [ ! -d "Arkbuild_ccache" ]; then
   mkdir Arkbuild_ccache
 fi
 export CCACHE_DIR=${PWD}/Arkbuild_ccache
+
+# ccache defaults to a 5G cache.  A full dArkOS build compiles far more than 5G
+# worth of objects (retroarch and its cores, ppsspp x2, gzdoom/lzdoom, scummvm,
+# emulationstation, ...), so the cache evicts its own earlier entries inside a
+# single run and the "subsequent builds are much faster" property never
+# materialises.  Size it for the whole build instead.  The file lives in
+# CCACHE_DIR, which is bind mounted into the chroot at /home/ark/Arkbuild_ccache,
+# so host and chroot compilers share these settings.
+CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-40G}"
+if [ ! -f "${CCACHE_DIR}/ccache.conf" ] || ! grep -q "^max_size" "${CCACHE_DIR}/ccache.conf"; then
+  cat <<EOF | tee "${CCACHE_DIR}/ccache.conf" > /dev/null
+max_size = ${CCACHE_MAX_SIZE}
+# Absolute build paths differ between the host tree and /home/ark inside the
+# chroot; these two make headers pulled in from either side hash the same.
+sloppiness = include_file_mtime,include_file_ctime,locale
+EOF
+fi
+
 sudo /usr/sbin/update-ccache-symlinks
 [ -z $(echo $PATH | grep ccache) ] && export PATH=/usr/lib/ccache:$PATH

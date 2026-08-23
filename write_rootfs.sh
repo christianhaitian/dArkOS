@@ -13,7 +13,14 @@ elif [[ "${ROOT_FILESYSTEM_FORMAT}" == *"ext"* ]]; then
   resize2fs -M ${FILESYSTEM}
   sudo dd if="${FILESYSTEM}" of="${DISK}" bs=512 seek="${STORAGE_PART_START}" conv=fsync,notrunc
 elif [ "${ROOT_FILESYSTEM_FORMAT}" == "btrfs" ]; then
-  sudo btrfs balance start --full-balance Arkbuild
+  # The point of this balance is to empty the mostly-unused chunks of a 52G
+  # build filesystem so it can be shrunk to ~7G, and usage-filtered balances do
+  # exactly that while rewriting a fraction of the data a --full-balance does
+  # (a full balance rewrites every chunk, including the ones already packed).
+  # --full-balance is still the fallback in the retry path below.
+  for USAGE in 0 20 50 75 90; do
+    sudo btrfs balance start -dusage=${USAGE} -musage=${USAGE} Arkbuild
+  done
   sudo sync Arkbuild
   sizes=(8000 7700 7300 7250 7100)
   i=0
