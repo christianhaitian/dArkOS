@@ -54,14 +54,35 @@ export CCACHE_DIR=${PWD}/Arkbuild_ccache
 # CCACHE_DIR, which is bind mounted into the chroot at /home/ark/Arkbuild_ccache,
 # so host and chroot compilers share these settings.
 CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-40G}"
-if [ ! -f "${CCACHE_DIR}/ccache.conf" ] || ! grep -q "^max_size" "${CCACHE_DIR}/ccache.conf"; then
-  cat <<EOF | tee "${CCACHE_DIR}/ccache.conf" > /dev/null
-max_size = ${CCACHE_MAX_SIZE}
-# Absolute build paths differ between the host tree and /home/ark inside the
-# chroot; these two make headers pulled in from either side hash the same.
-sloppiness = include_file_mtime,include_file_ctime,locale
-EOF
+if [ ! -f "${CCACHE_DIR}/ccache.conf" ] || ! sudo grep -q "^max_size" "${CCACHE_DIR}/ccache.conf"; then
+  # sudo, like every other file write here: the directory is bind mounted into the
+  # chroot and root writes into it for the whole build, so an unprivileged tee can
+  # fail on a tree from an earlier sudo-run build and silently leave the 5G default.
+  # Only max_size is set.  Nothing here relaxes ccache's correctness checks:
+  # include_file_mtime/ctime sloppiness would let a regenerated autoconf.h go
+  # unnoticed, and the kernel regenerates exactly that on every defconfig change.
+  echo "max_size = ${CCACHE_MAX_SIZE}" | sudo tee "${CCACHE_DIR}/ccache.conf" > /dev/null
 fi
 
 sudo /usr/sbin/update-ccache-symlinks
+
+# update-ccache-symlinks only creates entries for compilers dpkg knows about, and
+# the aarch64 toolchain used for the kernel is the Linaro 6.3.1 tarball that
+# utils.sh puts on PATH, not a package.  Without these symlinks the kernel and
+# u-boot cross compiles bypass ccache completely and are rebuilt in full on every
+# run.  ccache re-resolves the real compiler through PATH, which still finds the
+# Linaro one because /usr/lib/ccache is prepended in front of it below.
+# Only for tools that actually exist behind the prefix.  Creating a masquerade
+# link for a compiler that is not there (the Linaro tarball ships no
+# aarch64-linux-gnu-cc) turns a clean "not found, fall back" probe in some
+# configure script into a hard `ccache: Could not find compiler` mid-build.
+# update-ccache-symlinks above deletes links whose /usr/bin/<name> is missing, so
+# these are re-created here on every run by design.
+for CROSS_TOOL in gcc g++ cpp c++; do
+  CROSS_BIN="${CROSS_COMPILE:-aarch64-linux-gnu-}${CROSS_TOOL}"
+  if command -v "${CROSS_BIN}" > /dev/null 2>&1 && [ ! -e "/usr/lib/ccache/${CROSS_BIN}" ]; then
+    sudo ln -sf /usr/bin/ccache "/usr/lib/ccache/${CROSS_BIN}"
+  fi
+done
+
 [ -z $(echo $PATH | grep ccache) ] && export PATH=/usr/lib/ccache:$PATH

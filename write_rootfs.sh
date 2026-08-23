@@ -17,8 +17,10 @@ elif [ "${ROOT_FILESYSTEM_FORMAT}" == "btrfs" ]; then
   # build filesystem so it can be shrunk to ~7G, and usage-filtered balances do
   # exactly that while rewriting a fraction of the data a --full-balance does
   # (a full balance rewrites every chunk, including the ones already packed).
-  # --full-balance is still the fallback in the retry path below.
-  for USAGE in 0 20 50 75 90; do
+  # --full-balance is still the fallback in the retry path below, which is why the
+  # filters stop at 75: past that a filtered balance is a full balance with extra
+  # steps, and if these do not free enough the retry path runs the real one anyway.
+  for USAGE in 0 20 50 75; do
     sudo btrfs balance start -dusage=${USAGE} -musage=${USAGE} Arkbuild
   done
   sudo sync Arkbuild

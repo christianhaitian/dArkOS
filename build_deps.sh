@@ -12,21 +12,26 @@ else
   CHROOT_DIR="Arkbuild"
 fi
 
-# Install additional needed packages and protect them from autoremove
+# Install additional needed packages and protect them from autoremove.
+# Collected into one list first: install_package and protect_package both take a
+# list, and one apt transaction under qemu costs far less than 94 of them.
+NEEDED_PACKAGES=()
 while read NEEDED_PACKAGE; do
-  if [[ ! "$NEEDED_PACKAGE" =~ ^# ]]; then
-    install_package $BIT "${NEEDED_PACKAGE}"
-    protect_package $BIT "${NEEDED_PACKAGE}"
+  if [[ ! "$NEEDED_PACKAGE" =~ ^# ]] && [ -n "${NEEDED_PACKAGE}" ]; then
+    NEEDED_PACKAGES+=( "${NEEDED_PACKAGE}" )
   fi
 done <needed_packages.txt
+install_package $BIT "${NEEDED_PACKAGES[@]}"
+protect_package $BIT "${NEEDED_PACKAGES[@]}"
 
 # Install build dependencies
+NEEDED_DEV_PACKAGES=()
 while read NEEDED_DEV_PACKAGE; do
-  if [[ ! "$NEEDED_DEV_PACKAGE" =~ ^# ]]; then
-    install_package $BIT "${NEEDED_DEV_PACKAGE}"
-    #protect_package $BIT "${NEEDED_DEV_PACKAGE}"
+  if [[ ! "$NEEDED_DEV_PACKAGE" =~ ^# ]] && [ -n "${NEEDED_DEV_PACKAGE}" ]; then
+    NEEDED_DEV_PACKAGES+=( "${NEEDED_DEV_PACKAGE}" )
   fi
 done <needed_dev_packages.txt
+install_package $BIT "${NEEDED_DEV_PACKAGES[@]}"
 
 # Default gcc and g++ to version 12 if gcc is newer than 12
 GCC_VERSION=`sudo chroot ${CHROOT_DIR}/ bash -c "gcc --version | head -n 1 | awk '{print $3}' | cut -d' ' -f3 | cut -d'.' -f1"`
