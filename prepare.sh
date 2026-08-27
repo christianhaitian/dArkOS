@@ -15,6 +15,29 @@ do
   fi
 done
 
+# aarch64 (and armhf) chroots only run on an x86 host if binfmt_misc has qemu-user
+# handlers. Desktop systemd registers these via systemd-binfmt; containers and
+# Cloud Agent VMs (tini/PID 1) do not, so do it here. Native aarch64 skips this.
+if [ "$(uname -m)" != "aarch64" ]; then
+  if [ ! -d /proc/sys/fs/binfmt_misc ]; then
+    echo "binfmt_misc is not available; cannot emulate aarch64 chroots on this host."
+    exit 1
+  fi
+  if ! mountpoint -q /proc/sys/fs/binfmt_misc; then
+    sudo mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+    verify_action
+  fi
+  for BINFMT_CONF in /usr/lib/binfmt.d/qemu-aarch64.conf /usr/lib/binfmt.d/qemu-arm.conf; do
+    [ -f "${BINFMT_CONF}" ] || continue
+    BINFMT_NAME="$(sed -E 's/^:([^:]+):.*/\1/' "${BINFMT_CONF}")"
+    if [ ! -e "/proc/sys/fs/binfmt_misc/${BINFMT_NAME}" ]; then
+      sudo bash -c "cat '${BINFMT_CONF}' > /proc/sys/fs/binfmt_misc/register"
+      verify_action
+    fi
+  done
+  echo "qemu-user binfmt handlers: $(ls /proc/sys/fs/binfmt_misc | grep -E '^qemu-' | tr '\n' ' ')"
+fi
+
 # Ensure apt-cacher-ng is installed and if enabled for the build
 if [[ "${ENABLE_CACHE}" == "y" ]]; then
   if ! apt list --installed 2>/dev/null | grep -q apt-cacher-ng; then
@@ -32,11 +55,25 @@ if [[ "${ENABLE_CACHE}" == "y" ]]; then
       # Do not error out with a 503 error [Server reports unexpected range] message
       sudo sed -i "/\# VfileUseRangeOps: /c\VfileUseRangeOps: 0" /etc/apt-cacher-ng/acng.conf
   fi
-  # Ensure service is running
-  sudo systemctl enable --now apt-cacher-ng
+  # Ensure the daemon is running. systemctl is a no-op without systemd as PID 1
+  # (containers, Cloud Agent VMs), so fall back to launching apt-cacher-ng itself.
+  sudo systemctl enable --now apt-cacher-ng 2>/dev/null || true
   sudo rm -rf /var/lib/apt/lists
   sudo rm -rf /var/cache/apt/*
-  sudo systemctl restart apt-cacher-ng
+  sudo systemctl restart apt-cacher-ng 2>/dev/null || true
+  if ! pgrep -x apt-cacher-ng >/dev/null 2>&1; then
+    sudo install -d -o apt-cacher-ng -g apt-cacher-ng /run/apt-cacher-ng \
+      /var/cache/apt-cacher-ng /var/log/apt-cacher-ng
+    sudo -u apt-cacher-ng /usr/sbin/apt-cacher-ng -c /etc/apt-cacher-ng \
+      foreground=0 pidfile=/run/apt-cacher-ng/pid || true
+    sleep 1
+  fi
+  if pgrep -x apt-cacher-ng >/dev/null 2>&1; then
+    echo "apt-cacher-ng is running on 127.0.0.1:3142"
+  else
+    echo "apt-cacher-ng failed to start; set ENABLE_CACHE=n or fix the daemon."
+    exit 1
+  fi
 fi
 
 
@@ -86,3 +123,22 @@ for CROSS_TOOL in gcc g++ cpp c++; do
 done
 
 [ -z $(echo $PATH | grep ccache) ] && export PATH=/usr/lib/ccache:$PATH
+
+# Default: use distcc to a native aarch64 cross gcc on x86-64 hosts. Override
+# with USE_DISTCC=n (make or environment) to keep compiles inside qemu-user.
+if [ -z "${USE_DISTCC}" ]; then
+  if [ "$(uname -m)" = "x86_64" ]; then
+    USE_DISTCC=y
+  else
+    USE_DISTCC=n
+  fi
+fi
+export USE_DISTCC
+if [[ "${USE_DISTCC}" == "y" ]]; then
+  source ./distcc_cross.sh
+  if distcc_host_start; then
+    trap 'type distcc_host_stop >/dev/null 2>&1 && distcc_host_stop' EXIT
+  else
+    echo "distcc host start failed; chroot compiles will stay under qemu-user."
+  fi
+fi

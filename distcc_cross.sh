@@ -20,9 +20,12 @@
 # but not total win.
 #
 # Usage
-#   source ./distcc_cross.sh
+#   make <device>              # USE_DISTCC=y by default on x86-64 (prepare.sh
+#                              # starts distccd, build_deps.sh points the chroot)
+#   make USE_DISTCC=n <device> # keep compiles inside qemu-user
+#   source ./distcc_cross.sh   # manual / extra chroots
 #   distcc_host_start          # once, on the host, before the chroot builds
-#   distcc_chroot_setup        # after build_deps.sh has created the chroot
+#   distcc_chroot_setup        # after gcc is installed in the chroot
 #   ...run the build...
 #   distcc_host_stop
 #
@@ -41,11 +44,12 @@ function distcc_host_start() {
   local xgpp="aarch64-linux-gnu-g++-${DISTCC_GCC_VERSION}"
 
   if ! command -v "${xgcc}" >/dev/null 2>&1; then
+    sudo apt-get -y update
     sudo apt-get -y install distcc \
       "gcc-${DISTCC_GCC_VERSION}-aarch64-linux-gnu" \
       "g++-${DISTCC_GCC_VERSION}-aarch64-linux-gnu" || return 1
   fi
-  command -v distccd >/dev/null 2>&1 || sudo apt-get -y install distcc || return 1
+  command -v distccd >/dev/null 2>&1 || { sudo apt-get -y update; sudo apt-get -y install distcc || return 1; }
 
   # distccd resolves the compiler by the name the client asked for.  The chroot
   # asks for plain gcc/cc/g++/c++ (and for the prefixed names when a build system
@@ -110,12 +114,8 @@ function distcc_chroot_setup() {
   # The chroot shares the host's network namespace, so 127.0.0.1 is the host.
   sudo chroot "${CHROOT_DIR}/" bash -c \
     "DEBIAN_FRONTEND=noninteractive eatmydata apt-get -y install distcc" || return 1
-  if sudo grep -q "distcc_cross.sh" "${CHROOT_DIR}/root/.bashrc" 2>/dev/null; then
-    echo "chroot ${CHROOT_DIR} already configured for distcc"
-    return 0
-  fi
-  cat <<EOF | sudo tee -a "${CHROOT_DIR}/root/.bashrc" > /dev/null
-
+  sudo mkdir -p "${CHROOT_DIR}/etc/profile.d"
+  cat <<EOF | sudo tee "${CHROOT_DIR}/etc/profile.d/distcc-cross.sh" > /dev/null
 # --- distcc_cross.sh ---
 export DISTCC_HOSTS="127.0.0.1:${DISTCC_PORT}/${DISTCC_JOBS}"
 export DISTCC_FALLBACK=1
@@ -126,6 +126,10 @@ export CCACHE_PREFIX=distcc
 export PATH=/usr/lib/ccache:\$PATH
 # --- end distcc_cross.sh ---
 EOF
+  if ! sudo grep -q "distcc-cross.sh" "${CHROOT_DIR}/root/.bashrc" 2>/dev/null; then
+    echo '[ -f /etc/profile.d/distcc-cross.sh ] && . /etc/profile.d/distcc-cross.sh' | \
+      sudo tee -a "${CHROOT_DIR}/root/.bashrc" > /dev/null
+  fi
   echo "chroot ${CHROOT_DIR} pointed at distccd; -j for the component builds can now"
   echo "exceed nproc (try 2-3x) because the compiles run off-box."
 }

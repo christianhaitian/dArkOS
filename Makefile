@@ -6,6 +6,16 @@ BUILD_KODI ?= n
 BUILD_ARMHF ?= y
 BUILD_BLUEALSA ?= y
 
+# On x86-64, ship aarch64 chroot compiles to a native cross gcc via distcc
+# (see distcc_cross.sh). Native aarch64 hosts already compile in-chroot.
+ifeq ($(origin USE_DISTCC), undefined)
+  ifeq ($(shell uname -m),x86_64)
+    USE_DISTCC := y
+  else
+    USE_DISTCC := n
+  endif
+endif
+
 # Ensure system binaries like parted are in the path, and silence strict GCC warnings
 PATH := $(PATH):/usr/sbin:/sbin
 KCFLAGS := -w
@@ -15,8 +25,11 @@ export ENABLE_CACHE
 export BUILD_KODI
 export BUILD_ARMHF
 export BUILD_BLUEALSA
+export USE_DISTCC
 export PATH
 export KCFLAGS
+
+$(info native distcc aarch64 compiles? ${USE_DISTCC})
 
 ifeq ($(DEBIAN_CODE_NAME),)
   $(error DEBIAN_CODE_NAME is not set. Please run with DEBIAN_CODE_NAME=suite (e.g., trixie))
