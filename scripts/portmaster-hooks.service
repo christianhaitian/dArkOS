@@ -1,0 +1,12 @@
+[Unit]
+Description=Install the dArkOS hooks into the PortMaster control folder
+Wants=opt-system-Tools.mount
+After=opt-system-Tools.mount
+ConditionPathIsDirectory=/usr/local/share/dArkOS/portmaster
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/portmaster-hooks.sh
+
+[Install]
+WantedBy=multi-user.target

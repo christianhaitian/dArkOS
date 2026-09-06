@@ -7,13 +7,13 @@
 call_chroot "cd /home/ark &&
   git clone --recursive https://github.com/christianhaitian/drm_tool.git &&
   cd drm_tool &&
-  make &&
+  make -j$(nproc) &&
   strip drm_tool &&
   cp drm_tool /usr/local/bin/ &&
   chmod 777 /usr/local/bin/drm_tool &&
   make clean &&
   git checkout 1cb5b10b7d529105e33f27388519671ee7ce46f3 &&
-  make &&
+  make -j$(nproc) &&
   strip drm_tool &&
   cp drm_tool /usr/local/bin/panel_drm_tool &&
   chmod 777 /usr/local/bin/panel_drm_tool

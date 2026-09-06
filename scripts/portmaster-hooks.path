@@ -1,0 +1,14 @@
+[Unit]
+Description=Watch for PortMaster installs and updates
+Wants=opt-system-Tools.mount
+After=opt-system-Tools.mount
+
+[Path]
+# The parent of the control folder, watched non-recursively: the installer removes
+# and re-creates PortMaster/ here, while this unit's own writes go inside it and so
+# cannot re-trigger the watch.
+PathChanged=/opt/system/Tools
+Unit=portmaster-hooks.service
+
+[Install]
+WantedBy=multi-user.target
