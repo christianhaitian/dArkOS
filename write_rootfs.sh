@@ -42,6 +42,21 @@ pack_directory_rootfs_ext4() {
   ROOT_FILESYSTEM_MOUNT_OPTIONS="defaults,noatime"
 }
 
+copy_file_to_boot_fat() {
+  local src="$1"
+  local boot_loop
+  [ -f "$src" ] || return 0
+  if ! command -v mcopy >/dev/null 2>&1; then
+    sudo apt-get -y install mtools
+  fi
+  BOOT_PART_OFFSET=$((SYSTEM_PART_START * 512))
+  BOOT_PART_SIZE=$(( (SYSTEM_PART_END - SYSTEM_PART_START + 1) * 512 ))
+  boot_loop=$(sudo losetup --find --show --offset ${BOOT_PART_OFFSET} --sizelimit ${BOOT_PART_SIZE} "${DISK}")
+  export MTOOLS_SKIP_CHECK=1
+  sudo mcopy -o -i ${boot_loop} "$src" ::
+  sudo losetup -d ${boot_loop}
+}
+
 grow_disk_for_rootfs() {
   local rootfs_bytes part_bytes need_mb new_disk
   rootfs_bytes=$(stat -c%s "${FILESYSTEM}")
@@ -99,6 +114,7 @@ if [ "${ROOT_FILESYSTEM_FORMAT}" == "btrfs" ]; then
   if [ "$arkbuild_fs" != "btrfs" ]; then
     pack_directory_rootfs_ext4
     grow_disk_for_rootfs
+    copy_file_to_boot_fat mnt/boot/fstab.exfat
   fi
 fi
 
