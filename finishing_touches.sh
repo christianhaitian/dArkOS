@@ -404,8 +404,28 @@ sudo git clone --depth=1 https://github.com/Jetup13/es-theme-switch.git Arkbuild
 sudo git clone --depth=1 https://github.com/dani7959/es-theme-replica.git Arkbuild/tempthemes/es-theme-replica
 
 sync
-sudo umount -l ${mountpoint}
-sudo losetup -d ${LOOP_BOOT}
+# Host kernels without vfat cannot mount the boot FAT; files were staged in
+# ${mountpoint} as a normal directory. Copy them onto the FAT with mtools.
+if findmnt -n "${mountpoint}" >/dev/null 2>&1; then
+  sudo umount -l ${mountpoint}
+else
+  if ! command -v mcopy >/dev/null 2>&1; then
+    sudo apt-get -y install mtools
+  fi
+  if [ -z "${LOOP_BOOT}" ] || [ ! -e "${LOOP_BOOT}" ]; then
+    BOOT_PART_OFFSET=$((SYSTEM_PART_START * 512))
+    BOOT_PART_SIZE=$(( (SYSTEM_PART_END - SYSTEM_PART_START + 1) * 512 ))
+    LOOP_BOOT=$(sudo losetup --find --show --offset ${BOOT_PART_OFFSET} --sizelimit ${BOOT_PART_SIZE} ${DISK})
+    sudo mkfs.vfat -F 32 -n BOOT ${LOOP_BOOT}
+  fi
+  export MTOOLS_SKIP_CHECK=1
+  for bootfile in ${mountpoint}/*; do
+    [ -e "$bootfile" ] || continue
+    sudo mcopy -o -i ${LOOP_BOOT} -s "$bootfile" :: || true
+  done
+  sudo mdir -i ${LOOP_BOOT} :: || true
+fi
+sudo losetup -d ${LOOP_BOOT} || true
 
 # Format rootfs partition in final image
 ROOTFS_PART_OFFSET=$((STORAGE_PART_START * 512))
@@ -428,7 +448,11 @@ fi
 sudo mkfs.vfat -F 32 -n EASYROMS ${LOOP_ROM}
 fat32_mountpoint=mnt/roms
 mkdir -p ${fat32_mountpoint}
-sudo mount ${LOOP_ROM} ${fat32_mountpoint}
+if ! sudo mount ${LOOP_ROM} ${fat32_mountpoint}; then
+  echo "vfat mount unavailable; staging EASYROMS in ${fat32_mountpoint} for roms.tar"
+  sudo losetup -d ${LOOP_ROM} || true
+  LOOP_ROM=""
+fi
 sudo mkdir -p Arkbuild/roms
 while read GAME_SYSTEM; do
   if [[ ! "$GAME_SYSTEM" =~ ^# ]]; then
@@ -498,6 +522,10 @@ sudo tar -C mnt/ -cvf Arkbuild/roms.tar roms
 # Remove and cleanup fat32 roms mountpoint
 sudo chmod -R 755 ${fat32_mountpoint}
 sync
-sudo umount ${fat32_mountpoint}
-sudo losetup -d ${LOOP_ROM}
+if findmnt -n "${fat32_mountpoint}" >/dev/null 2>&1; then
+  sudo umount ${fat32_mountpoint}
+fi
+if [ -n "${LOOP_ROM}" ]; then
+  sudo losetup -d ${LOOP_ROM} || true
+fi
 sudo rm -rf ${fat32_mountpoint}

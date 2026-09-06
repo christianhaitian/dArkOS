@@ -5,6 +5,81 @@
 # Requires: utils.sh (verify_action, call_chroot), BUILD_ARMHF env var
 # ==============================================================================
 
+# security.debian.org/debian-security/... 404s on some mirrors; bullseye
+# security debs also rotate off the live pool. Try the current CDN, then
+# snapshot.debian.org by binary hash.
+download_deb() {
+    local url="$1"
+    local file
+    file=$(basename "$url")
+    rm -f "$file"
+
+    try_wget() {
+        local candidate="$1"
+        wget -t 3 -T 60 --no-check-certificate -O "$file" "$candidate" || return 1
+        if [ -s "$file" ]; then
+            echo "Downloaded $file from $candidate"
+            return 0
+        fi
+        rm -f "$file"
+        return 1
+    }
+
+    if try_wget "$url"; then
+        return 0
+    fi
+
+    local rewritten="$url"
+    rewritten="${rewritten/http:\/\/security.debian.org\/debian-security/https://deb.debian.org/debian-security}"
+    rewritten="${rewritten/https:\/\/security.debian.org\/debian-security/https://deb.debian.org/debian-security}"
+    rewritten="${rewritten/http:\/\/security.debian.org/https://deb.debian.org/debian-security}"
+    if [ "$rewritten" != "$url" ] && try_wget "$rewritten"; then
+        return 0
+    fi
+
+    local snapshot
+    snapshot=$(python3 - "$file" <<'PY'
+import json, re, sys, urllib.parse, urllib.request
+
+filename = sys.argv[1]
+m = re.match(r"^(.*)_(.+)_(amd64|arm64|armhf|i386|all)\.deb$", filename)
+if not m:
+    sys.exit(0)
+name, ver, arch = m.group(1), m.group(2), m.group(3)
+try:
+    idx = json.load(urllib.request.urlopen(
+        "https://snapshot.debian.org/mr/binary/%s/" % urllib.parse.quote(name),
+        timeout=60,
+    ))
+except Exception:
+    sys.exit(0)
+versions = [row["binary_version"] for row in idx.get("result", [])]
+match = [v for v in versions if v == ver or v.endswith(":" + ver)]
+if not match:
+    sys.exit(0)
+bv = match[0]
+url = "https://snapshot.debian.org/mr/binary/%s/%s/binfiles" % (
+    urllib.parse.quote(name, safe=""),
+    urllib.parse.quote(bv, safe=""),
+)
+try:
+    data = json.load(urllib.request.urlopen(url, timeout=60))
+except Exception:
+    sys.exit(0)
+for row in data.get("result", []):
+    if row.get("architecture") == arch and row.get("hash"):
+        print("https://snapshot.debian.org/file/%s/%s" % (row["hash"], filename))
+        break
+PY
+)
+    if [ -n "$snapshot" ] && try_wget "$snapshot"; then
+        return 0
+    fi
+
+    echo "[Error] Could not download $file"
+    return 1
+}
+
 install_lib() {
     local url="$1"
     local lib_name="$2"
@@ -14,8 +89,7 @@ install_lib() {
 
     # --- ARM64 ---
     local deb_arm64=$(basename "$url")
-    wget -t 3 -T 60 --no-check-certificate "$url"
-    #verify_action
+    download_deb "$url" || exit 1
     dpkg --fsys-tarfile "$deb_arm64" | tar -xO --wildcards "*$wildcard*" > "$lib_name"
     if [ ! -s "$lib_name" ]; then
         echo "[Error] Extraction failed for $lib_name"
@@ -29,8 +103,7 @@ install_lib() {
     if [[ "${BUILD_ARMHF}" == "y" ]]; then
         local url_armhf="${url//_arm64/_armhf}"
         local deb_armhf=$(basename "$url_armhf")
-        wget -t 3 -T 60 --no-check-certificate "$url_armhf"
-        #verify_action
+        download_deb "$url_armhf" || exit 1
         dpkg --fsys-tarfile "$deb_armhf" | tar -xO --wildcards "*$wildcard*" > "$lib_name"
         if [ ! -s "$lib_name" ]; then
             echo "[Error] Extraction failed for $lib_name (armhf)"
