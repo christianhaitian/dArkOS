@@ -412,7 +412,7 @@ else
   if ! command -v mcopy >/dev/null 2>&1; then
     sudo apt-get -y install mtools
   fi
-  if [ -z "${LOOP_BOOT}" ] || [ ! -e "${LOOP_BOOT}" ]; then
+  if [ -z "${LOOP_BOOT:-}" ] || [ ! -e "${LOOP_BOOT:-}" ]; then
     BOOT_PART_OFFSET=$((SYSTEM_PART_START * 512))
     BOOT_PART_SIZE=$(( (SYSTEM_PART_END - SYSTEM_PART_START + 1) * 512 ))
     LOOP_BOOT=$(sudo losetup --find --show --offset ${BOOT_PART_OFFSET} --sizelimit ${BOOT_PART_SIZE} ${DISK})
@@ -425,7 +425,7 @@ else
   done
   sudo mdir -i ${LOOP_BOOT} :: || true
 fi
-sudo losetup -d ${LOOP_BOOT} || true
+sudo losetup -d ${LOOP_BOOT:-} || true
 
 # Format rootfs partition in final image
 ROOTFS_PART_OFFSET=$((STORAGE_PART_START * 512))
