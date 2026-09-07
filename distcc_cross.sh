@@ -63,9 +63,21 @@ function distcc_host_start() {
   # systems ask for the triplet-prefixed name.  These must shadow the host's own
   # x86 gcc-${DISTCC_GCC_VERSION}, which is why distccd is started with this
   # directory first on PATH.
+  # prepare.sh prepends /usr/lib/ccache. `command -v aarch64-linux-gnu-gcc-12`
+  # then returns the ccache masquerade; distccd running that as `cc` can emit
+  # x86_64 objects that aarch64 ld refuses. Always link the real /usr/bin
+  # cross compiler.
   local xgcc_path xgpp_path
-  xgcc_path="$(command -v ${xgcc})" || return 1
-  xgpp_path="$(command -v ${xgpp})" || return 1
+  if [ -x "/usr/bin/${xgcc}" ]; then
+    xgcc_path="/usr/bin/${xgcc}"
+  else
+    xgcc_path="$(command -v ${xgcc})" || return 1
+  fi
+  if [ -x "/usr/bin/${xgpp}" ]; then
+    xgpp_path="/usr/bin/${xgpp}"
+  else
+    xgpp_path="$(command -v ${xgpp})" || return 1
+  fi
   [ -x "${xgcc_path}" ] && [ -x "${xgpp_path}" ] || { echo "cross compilers not found"; return 1; }
 
   local n
@@ -90,7 +102,7 @@ function distcc_host_start() {
   done
 
   distcc_host_stop
-  sudo env PATH="${DISTCC_CROSS_DIR}:${PATH}" distccd \
+  sudo env PATH="${DISTCC_CROSS_DIR}:/usr/bin:/bin" distccd \
     --daemon \
     --port "${DISTCC_PORT}" \
     --listen 127.0.0.1 \
