@@ -6,7 +6,7 @@ if [ -z $(dpkg --print-foreign-architectures | grep i386) ]; then
   sudo dpkg --add-architecture i386
 fi
 sudo apt -y update
-for NEEDED_TOOL in bc btrfs-progs build-essential bison flex ccache curl debconf-utils debootstrap device-tree-compiler dosfstools e2fsprogs eatmydata gcc gdisk jq lib32stdc++6 libc6-i386 libncurses5-dev libssl-dev lz4 lzop p7zip-full parted python-is-python3 qemu-user-static zlib1g:i386 xfsprogs
+for NEEDED_TOOL in bc btrfs-progs build-essential bison flex ccache curl debconf-utils debootstrap device-tree-compiler dosfstools e2fsprogs eatmydata gcc gdisk jq lib32stdc++6 libc6-i386 libncurses5-dev libssl-dev lz4 lzop p7zip-full parted python-is-python3 qemu-user-static zlib1g:i386 xfsprogs mtools u-boot-tools
 do
   apt list --installed 2>/dev/null | grep -q "$NEEDED_TOOL"
   if [[ $? != "0" ]]; then

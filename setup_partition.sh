@@ -46,5 +46,9 @@ FILESYSTEM="ArkOS_File_System.img"
 dd if=/dev/zero of="${FILESYSTEM}" bs=1M count=0 seek="${BUILD_SIZE}" conv=fsync
 sudo mkfs.${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_FORMAT_PARAMETERS} "${FILESYSTEM}"
 mkdir -p Arkbuild/
-sudo mount -t ${ROOT_FILESYSTEM_FORMAT} -o ${ROOT_FILESYSTEM_MOUNT_OPTIONS},loop ${FILESYSTEM} Arkbuild/
+if ! sudo mount -t ${ROOT_FILESYSTEM_FORMAT} -o ${ROOT_FILESYSTEM_MOUNT_OPTIONS},loop ${FILESYSTEM} Arkbuild/; then
+  echo "WARNING: could not mount ${ROOT_FILESYSTEM_FORMAT} loop (${FILESYSTEM})."
+  echo "The host kernel likely lacks that filesystem. Building into directory Arkbuild;"
+  echo "write_rootfs.sh will pack the tree via ext4 when the loop is not btrfs."
+fi
 
