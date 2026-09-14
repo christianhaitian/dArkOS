@@ -41,6 +41,22 @@ echo "exit 101" | sudo tee Arkbuild/usr/sbin/policy-rc.d > /dev/null
 sudo chmod 0755 Arkbuild/usr/sbin/policy-rc.d
 sudo chroot Arkbuild/ mount -t proc proc /proc
 
+# Every dpkg run in this chroot is emulated, and the build installs ~145 packages
+# plus everything they pull in.  Manual pages and docs are the most expensive part
+# of that for no benefit: they are unpacked under qemu, they fire the man-db
+# trigger on every transaction, and cleanup_filesystem.sh deletes
+# /usr/share/man/* at the end anyway.  Skip unpacking them in the first place and
+# turn the man-db index rebuild off.  Copyright files are kept - the image ships
+# GPL software and those have to stay.
+sudo mkdir -p Arkbuild/etc/dpkg/dpkg.cfg.d
+cat <<'EOF' | sudo tee Arkbuild/etc/dpkg/dpkg.cfg.d/01-darkos-slim > /dev/null
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/info/*
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+EOF
+echo 'man-db man-db/auto-update boolean false' | sudo chroot Arkbuild/ debconf-set-selections 2>/dev/null || true
+
 # Install base runtime packages
 sudo chroot Arkbuild/ eatmydata apt-get -y update
 sudo chroot Arkbuild/ eatmydata apt-get -y upgrade

@@ -167,6 +167,28 @@ function remove_arkbuild32() {
 }
 
 updateapt="N"
+
+# Every chroot call here is an emulated aarch64 process, so the two things that
+# matter for wall clock are how many of them there are and how many separate apt
+# transactions they add up to.  The old shape of this function was one `dpkg -s`
+# plus one `apt install` per package: for the 145 entries of needed_packages.txt
+# and needed_dev_packages.txt that is 145 apt solver runs and 145 rounds of dpkg
+# trigger processing (ldconfig, man-db, initramfs) under qemu.  One dpkg-query to
+# find what is missing and one apt transaction to install all of it does the same
+# work once.  The per-package loop is kept as a fallback so a single unavailable
+# package still degrades to "skip that one" instead of failing the whole batch.
+function apt_update_once() {
+  local CHROOT_DIR="$1"
+  if [[ "$updateapt" == "N" ]]; then
+    if test -z "$(cat ${CHROOT_DIR}/etc/apt/sources.list | grep contrib)"
+    then
+      sudo sed -i '/main/s//main contrib non-free non-free-firmware/' ${CHROOT_DIR}/etc/apt/sources.list
+    fi
+    sudo chroot ${CHROOT_DIR}/ apt -y update
+    updateapt="Y"
+  fi
+}
+
 function install_package() {
   if [ "$1" == "32" ]; then
     NEEDED_ARCH=""
@@ -179,25 +201,71 @@ function install_package() {
     CHROOT_DIR="Arkbuild"
   fi
   neededlibs=( ${@:2} )
+  [ ${#neededlibs[@]} -eq 0 ] && return 0
+
+  # One emulated dpkg-query for the whole batch instead of one `dpkg -s` each.
+  # ${Architecture} is compared against the requested one; "all" matches anything.
+  local installed_arch installed_names
+  installed_arch=$(sudo chroot ${CHROOT_DIR}/ dpkg-query -W \
+    -f '${Package} ${Architecture} ${db:Status-Status}\n' 2>/dev/null \
+    | awk '$3 == "installed" { print $1 ":" $2 }')
+  installed_names=$(echo "${installed_arch}" | cut -d: -f1)
+
+  local wanted_arch="${NEEDED_ARCH#:}"
+  local missing=()
+  local libs
   for libs in "${neededlibs[@]}"
   do
-     sudo chroot ${CHROOT_DIR}/ dpkg -s "${libs}${NEEDED_ARCH}" &>/dev/null
+     # -Fx throughout: package names carry '+' and '.' (libstdc++6, python3.11), and
+     # an unanchored match would let gzip satisfy a request for zip.
+     if [ -n "${wanted_arch}" ]; then
+       echo "${installed_arch}" | grep -Fxq -e "${libs}:${wanted_arch}" -e "${libs}:all" && continue
+     else
+       # No architecture was requested (the 32-bit chroot): any architecture counts.
+       echo "${installed_names}" | grep -Fxq -e "${libs}" && continue
+     fi
+     missing+=( "${libs}${NEEDED_ARCH}" )
+  done
+  [ ${#missing[@]} -eq 0 ] && return 0
+
+  apt_update_once "${CHROOT_DIR}"
+
+  # apt solves a transaction atomically: one name it cannot resolve fails the whole
+  # batch.  That matters here because build_deps.sh feeds the same two 64-bit lists
+  # to the armhf chroot, where some of them do not exist.  Ask apt once which names
+  # it actually knows and drop the rest, so the batch is not set up to fail.
+  local known unknown=()
+  known=$(sudo chroot ${CHROOT_DIR}/ bash -c "apt-cache --no-all-versions show ${missing[*]} 2>/dev/null" \
+    | awk '/^Package: /{print $2}' | sort -u)
+  local candidates=()
+  for libs in "${missing[@]}"
+  do
+     if echo "${known}" | grep -Fxq "${libs%%:*}"; then
+       candidates+=( "${libs}" )
+     else
+       unknown+=( "${libs}" )
+     fi
+  done
+  [ ${#unknown[@]} -gt 0 ] && echo "Not available in this chroot, skipping: ${unknown[*]}"
+  [ ${#candidates[@]} -eq 0 ] && return 0
+
+  # One transaction for everything that is missing and installable.
+  sudo chroot ${CHROOT_DIR}/ bash -c "DEBIAN_FRONTEND=noninteractive eatmydata apt -y install ${candidates[*]}"
+  if [[ $? == "0" ]]; then
+    echo "${candidates[*]} were successfully installed."
+    return 0
+  fi
+
+  echo " "
+  echo "Batch install failed; retrying the ${#candidates[@]} packages one at a time."
+  for libs in "${candidates[@]}"
+  do
+     sudo chroot ${CHROOT_DIR}/ bash -c "DEBIAN_FRONTEND=noninteractive eatmydata apt -y install ${libs}"
      if [[ $? != "0" ]]; then
-       if [[ "$updateapt" == "N" ]]; then
-         if test -z "$(cat ${CHROOT_DIR}/etc/apt/sources.list | grep contrib)"
-         then
-           sudo sed -i '/main/s//main contrib non-free non-free-firmware/' ${CHROOT_DIR}/etc/apt/sources.list
-		 fi
-         sudo chroot ${CHROOT_DIR}/ apt -y update
-         updateapt="Y"
-       fi
-       sudo chroot ${CHROOT_DIR}/ bash -c "DEBIAN_FRONTEND=noninteractive eatmydata apt -y install ${libs}${NEEDED_ARCH}"
-       if [[ $? != "0" ]]; then
-         echo " "
-         echo "Could not install needed library ${libs}${NEEDED_ARCH}."
-       else
-	     echo "${libs}${NEEDED_ARCH} was successfully installed."
-       fi
+       echo " "
+       echo "Could not install needed library ${libs}."
+     else
+       echo "${libs} was successfully installed."
      fi
   done
 }
@@ -209,13 +277,12 @@ function protect_package() {
     CHROOT_DIR="Arkbuild"
   fi
   protectlibs=( ${@:2} )
-  for protectedlib in "${protectlibs[@]}"
-  do
-     sudo chroot ${CHROOT_DIR}/ apt-mark manual "${protectedlib}"
-     if [[ $? != "0" ]]; then
-       echo "${protectedlib} could not mark as manually installed."
-     else
-	   echo "$${protectedlib} has been marked as manually installed."
-     fi
-  done
+  [ ${#protectlibs[@]} -eq 0 ] && return 0
+  # apt-mark takes a list; one emulated invocation instead of one per package.
+  sudo chroot ${CHROOT_DIR}/ apt-mark manual "${protectlibs[@]}"
+  if [[ $? != "0" ]]; then
+    echo "apt-mark reported a problem; at least one of these is not installed: ${protectlibs[*]}"
+  else
+    echo "${protectlibs[*]} have been marked as manually installed."
+  fi
 }

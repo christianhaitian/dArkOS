@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# SPDX-License-Identifier: MIT
+#
+
+## Modular - dArkOS
+# 
+# A modular file that is sourced for specific script lines required by ports running on dArkOS.
+#
+# usage `[ -f "${controlfolder}/mod_${CFW_NAME}.txt" ] && source "${controlfolder}/mod_${CFW_NAME}.txt"`
+#
+# dArkOS ships this file into the control folder, replacing the upstream
+# PortMaster copy of the same name - keep everything above the dArkOS section in
+# sync with PortMaster-GUI's PortMaster/mod_dArkOS.txt.
+
+# Address and silence Pulseaudio Error "Failed to create secure directory (/run/user/1002//pulse): No such file or directory"
+$ESUDO mkdir -p /run/user/$UID/pulse
+$ESUDO chown $UID /run/user/$UID
+$ESUDO chown $UID /run/user/$UID/pulse
+$ESUDO chmod 755 /run/user/$UID
+$ESUDO chmod 755 /run/user/$UID/pulse
+sleep 0.3
+
+if [ "$(readlink /usr/lib/aarch64-linux-gnu/libEGL.so.1)" != "libMali.so" ] || [ ! -e /usr/lib/aarch64-linux-gnu/libGLdispatch.so ]; then
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libEGL.so
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libEGL.so.1
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libEGL.so.1.0.0
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libEGL.so.1.1.0
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv1_CM.so
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv1_CM.so.1
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv1_CM.so.1.1.0
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv2.so
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv2.so.2
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv2.so.2.0.0
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv2.so.2.1.0
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv3.so
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libGLESv3.so.3
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libgbm.so
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libgbm.so.1
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libgbm.so.1.0.0
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libmali.so
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libMali.so /usr/lib/aarch64-linux-gnu/libmali.so.1
+  sudo ln -sfv /usr/lib/aarch64-linux-gnu/libGLdispatch.so.0.0.0 /usr/lib/aarch64-linux-gnu/libGLdispatch.so
+fi
+
+pm_platform_helper() {
+    # DO SOMETHING HERE
+    printf ""
+}
+
+## dArkOS additions below this line.
+
+# EmulationStation launches ports as `nice -n -19 %ROM%`, but it runs as ark from a systemd
+# unit with no PAMName=, so pam_limits never applies the `ark - nice -20` line of
+# /etc/security/limits.conf and that nice call fails with EPERM.  Restore the priority the
+# launcher asked for.  PortMaster.sh sources this file as well and is skipped: it downloads
+# and unpacks, so there is no case for running the GUI itself at the top of the nice range.
+case "$0" in
+  *PortMaster.sh)
+    ;;
+  *)
+    $ESUDO renice -n -19 -p $$ > /dev/null 2>&1
+    ;;
+esac

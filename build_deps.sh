@@ -12,21 +12,26 @@ else
   CHROOT_DIR="Arkbuild"
 fi
 
-# Install additional needed packages and protect them from autoremove
+# Install additional needed packages and protect them from autoremove.
+# Collected into one list first: install_package and protect_package both take a
+# list, and one apt transaction under qemu costs far less than 94 of them.
+NEEDED_PACKAGES=()
 while read NEEDED_PACKAGE; do
-  if [[ ! "$NEEDED_PACKAGE" =~ ^# ]]; then
-    install_package $BIT "${NEEDED_PACKAGE}"
-    protect_package $BIT "${NEEDED_PACKAGE}"
+  if [[ ! "$NEEDED_PACKAGE" =~ ^# ]] && [ -n "${NEEDED_PACKAGE}" ]; then
+    NEEDED_PACKAGES+=( "${NEEDED_PACKAGE}" )
   fi
 done <needed_packages.txt
+install_package $BIT "${NEEDED_PACKAGES[@]}"
+protect_package $BIT "${NEEDED_PACKAGES[@]}"
 
 # Install build dependencies
+NEEDED_DEV_PACKAGES=()
 while read NEEDED_DEV_PACKAGE; do
-  if [[ ! "$NEEDED_DEV_PACKAGE" =~ ^# ]]; then
-    install_package $BIT "${NEEDED_DEV_PACKAGE}"
-    #protect_package $BIT "${NEEDED_DEV_PACKAGE}"
+  if [[ ! "$NEEDED_DEV_PACKAGE" =~ ^# ]] && [ -n "${NEEDED_DEV_PACKAGE}" ]; then
+    NEEDED_DEV_PACKAGES+=( "${NEEDED_DEV_PACKAGE}" )
   fi
 done <needed_dev_packages.txt
+install_package $BIT "${NEEDED_DEV_PACKAGES[@]}"
 
 # Default gcc and g++ to version 12 if gcc is newer than 12
 GCC_VERSION=`sudo chroot ${CHROOT_DIR}/ bash -c "gcc --version | head -n 1 | awk '{print $3}' | cut -d' ' -f3 | cut -d'.' -f1"`
@@ -45,6 +50,16 @@ sudo mount --bind ${PWD}/Arkbuild_ccache ${CHROOT_DIR}/home/ark/Arkbuild_ccache
 sudo chroot ${CHROOT_DIR}/ bash -c "[ -z \$(echo \$CCACHE_DIR | grep ccache) ]" && echo -e "export CCACHE_DIR=/home/ark/Arkbuild_ccache" | sudo tee -a ${CHROOT_DIR}/root/.bashrc > /dev/null
 sudo chroot ${CHROOT_DIR}/ bash -c "[ -z \$(echo \$PATH | grep ccache) ]" && echo -e "export PATH=/usr/lib/ccache:\$PATH" | sudo tee -a ${CHROOT_DIR}/root/.bashrc > /dev/null
 sudo chroot ${CHROOT_DIR}/ bash -c "/usr/sbin/update-ccache-symlinks"
+
+# Point the 64-bit chroot at the host distccd so gcc/g++ compile natively.
+# Must run after gcc is pinned to DISTCC_GCC_VERSION and after .bashrc has the
+# ccache PATH, and before librga/libgo2 (the first from-source compiles).
+if [[ "${USE_DISTCC}" == "y" ]] && [ "${BIT}" == "64" ]; then
+  if ! type distcc_chroot_setup >/dev/null 2>&1; then
+    source ./distcc_cross.sh
+  fi
+  distcc_chroot_setup "${CHROOT_DIR}" || echo "distcc chroot setup failed; compiles stay under qemu-user."
+fi
 
 # Symlink fix for DRM headers
 sudo chroot ${CHROOT_DIR}/ bash -c "ln -s /usr/include/libdrm/ /usr/include/drm"
@@ -79,7 +94,7 @@ sudo chroot Arkbuild/ ldconfig -X
 sudo chroot ${CHROOT_DIR}/ bash -c "git clone https://github.com/mesonbuild/meson.git && ln -s /meson/meson.py /usr/bin/meson"
 
 # Build and install librga
-sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+sudo chroot ${CHROOT_DIR}/ bash -c "source /root/.bashrc && cd /home/ark &&
   git clone https://github.com/christianhaitian/linux-rga.git &&
   cd linux-rga &&
   git checkout 1fc02d56d97041c86f01bc1284b7971c6098c5fb &&
@@ -92,7 +107,7 @@ sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
   "
 
 # Build and install libgo2
-sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+sudo chroot ${CHROOT_DIR}/ bash -c "source /root/.bashrc && cd /home/ark &&
   git clone https://github.com/OtherCrashOverride/libgo2.git &&
   cd libgo2 &&
   premake4 gmake &&

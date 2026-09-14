@@ -18,7 +18,7 @@ elif [[ "$UNIT" == "miniloong" ]]; then
 fi
 
 call_chroot "cd /home/ark &&
-  git clone --recursive https://github.com/christianhaitian/351Files.git &&
+  git clone --recursive --depth=1 https://github.com/christianhaitian/351Files.git &&
   cd 351Files &&
   ./build_RG351.sh ${BUILD_UNIT} ArkOS /roms ./res &&
   strip 351Files*

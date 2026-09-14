@@ -5,7 +5,7 @@
 call_chroot "cd /home/ark &&
   git clone --recursive --depth=1 https://github.com/christianhaitian/gptokeyb.git -b inttools &&
   cd gptokeyb &&
-  make all &&
+  make -j$(nproc) all &&
   mkdir -p /opt/inttools &&
   strip gptokeyb &&
   cp gptokeyb /opt/inttools/ &&

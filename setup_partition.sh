@@ -18,7 +18,9 @@ if [ "$ROOT_FILESYSTEM_FORMAT" == "xfs" ] || [ "$ROOT_FILESYSTEM_FORMAT" == "btr
     else
       ROOT_FILESYSTEM_FORMAT_PARAMETERS="-f -L ROOTFS"
     fi
-    ROOT_FILESYSTEM_MOUNT_OPTIONS="defaults,noatime,compress=zlib:1"
+    # btrfs on 4.4 has no compress=<algo>:<level> syntax, so "zlib:1" made the
+    # whole remount of / fail; confirmed on an RG351MP.
+    ROOT_FILESYSTEM_MOUNT_OPTIONS="defaults,noatime,compress=lzo"
   fi
 elif [[ "$ROOT_FILESYSTEM_FORMAT" == *"ext"* ]]; then
   ROOT_FILESYSTEM_FORMAT_PARAMETERS="-F -L ROOTFS"
@@ -44,5 +46,9 @@ FILESYSTEM="ArkOS_File_System.img"
 dd if=/dev/zero of="${FILESYSTEM}" bs=1M count=0 seek="${BUILD_SIZE}" conv=fsync
 sudo mkfs.${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_FORMAT_PARAMETERS} "${FILESYSTEM}"
 mkdir -p Arkbuild/
-sudo mount -t ${ROOT_FILESYSTEM_FORMAT} -o ${ROOT_FILESYSTEM_MOUNT_OPTIONS},loop ${FILESYSTEM} Arkbuild/
+if ! sudo mount -t ${ROOT_FILESYSTEM_FORMAT} -o ${ROOT_FILESYSTEM_MOUNT_OPTIONS},loop ${FILESYSTEM} Arkbuild/; then
+  echo "WARNING: could not mount ${ROOT_FILESYSTEM_FORMAT} loop (${FILESYSTEM})."
+  echo "The host kernel likely lacks that filesystem. Building into directory Arkbuild;"
+  echo "write_rootfs.sh will pack the tree via ext4 when the loop is not btrfs."
+fi
 
