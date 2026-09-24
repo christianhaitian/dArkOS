@@ -13,4 +13,7 @@ odroidgoA-4.4.y/
 rg351/
 *.img
 .img.*
+*.7z
+*.7z.*
+artifacts-out/
 wget-log*

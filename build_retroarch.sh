@@ -4,6 +4,7 @@
 if [ -f "Arkbuild_package_cache/${CHIPSET}/retroarch_${UNIT}.tar.gz" ] && [ "$(cat Arkbuild_package_cache/${CHIPSET}/retroarch_${UNIT}.commit)" == "$(curl -s https://raw.githubusercontent.com/christianhaitian/${CHIPSET}_core_builds/refs/heads/master/scripts/retroarch.sh | grep -oP '(?<=tag=").*?(?=")')" ]; then
     sudo tar -xvzpf Arkbuild_package_cache/${CHIPSET}/retroarch_${UNIT}.tar.gz
 else
+	retroarch_tries=0
 	while true
 	do
 	  call_chroot "cd /home/ark &&
@@ -13,6 +14,11 @@ else
 		eatmydata ./builds-alt.sh retroarch
 		"
 	  if [[ "$?" -ne "0" ]]; then
+		retroarch_tries=$((retroarch_tries + 1))
+		if [ "${retroarch_tries}" -ge 5 ]; then
+		  echo "RetroArch build failed after ${retroarch_tries} attempts; continuing"
+		  break
+		fi
 		sleep 30
 		continue
 	  else
@@ -120,6 +126,7 @@ sudo rm -rf Arkbuild/home/ark/.config/retroarch/shaders/shaders_glsl/Sharp-Shimm
 if [ -f "Arkbuild_package_cache/${CHIPSET}/easyrpg.tar.gz" ] && [ "$(cat Arkbuild_package_cache/${CHIPSET}/easyrpg.commit)" = "$(curl -s https://raw.githubusercontent.com/christianhaitian/${CHIPSET}_core_builds/refs/heads/master/scripts/easyrpg.sh | grep -oP '(?<=tag=").*?(?=")')" ]; then
     sudo tar -xvzpf Arkbuild_package_cache/${CHIPSET}/easyrpg.tar.gz
 else
+	easyrpg_tries=0
 	while true
 	do
 	  call_chroot "cd /home/ark &&
@@ -128,6 +135,11 @@ else
 		eatmydata ./builds-alt.sh easyrpg
 		"
 	  if [[ "$?" -ne "0" ]]; then
+		easyrpg_tries=$((easyrpg_tries + 1))
+		if [ "${easyrpg_tries}" -ge 5 ]; then
+		  echo "EasyRPG build failed after ${easyrpg_tries} attempts; continuing"
+		  break
+		fi
 		sleep 30
 		continue
 	  else
@@ -198,6 +210,7 @@ if [[ "${BUILD_ARMHF}" == "y" ]]; then
 	else
 		setup_arkbuild32
 		sudo chroot Arkbuild32/ mkdir -p /home/ark
+		retroarch32_tries=0
 		while true
 		do
 		  call_chroot32 "cd /home/ark &&
@@ -208,6 +221,11 @@ if [[ "${BUILD_ARMHF}" == "y" ]]; then
 			./builds-alt.sh retroarch
 			"
 		  if [[ "$?" -ne "0" ]]; then
+			retroarch32_tries=$((retroarch32_tries + 1))
+			if [ "${retroarch32_tries}" -ge 5 ]; then
+			  echo "retroarch32 build failed after ${retroarch32_tries} attempts; continuing"
+			  break
+			fi
 			sleep 30
 			continue
 		  else

@@ -194,6 +194,10 @@ sudo rm -rf Arkbuild/var/log/journal
 sudo rm Arkbuild/usr/sbin/policy-rc.d
 sudo rm -f Arkbuild/etc/resolv.conf
 sudo rm -f Arkbuild/etc/network/interfaces
+# The build-time dpkg path-excludes (bootstrap_rootfs.sh) must not ship: on the
+# device they would silently strip man pages and docs from everything the user
+# ever installs with apt.
+sudo rm -f Arkbuild/etc/dpkg/dpkg.cfg.d/01-darkos-slim
 sudo rm -rf Arkbuild/usr/share/man/*
 #for i in {1..8}; do sudo mkdir -p Arkbuild/usr/share/man/man"$i"; done
 sudo rm -rf Arkbuild/var/lib/apt/lists/*
