@@ -18,18 +18,22 @@ if [[ -e "../logos/unrotated/dArkos${UNIT}.png" ]]; then
 fi
 
 if [ "$UNIT" = "rgb30" ]; then
-  sed -e 's/model = "Powkiddy RGB30.*"/model = "Powkiddy RGB20SX"/' \
-      -e 's/wifi_chip_type = "ap6330"/wifi_chip_type = "rtl8723ds"/' \
-      -e 's/"realtek,rtl8821cs-bt", "realtek,rtl8822cs-bt"/"realtek,rtl8723ds-bt", "realtek,rtl8723bs-bt"/' \
-      -e 's/design_capacity = <4100>/design_capacity = <5000>/' \
-      -e 's/design_qmax = <4100>/design_qmax = <5000>/' \
-      arch/arm64/boot/dts/rockchip/rk3566-rgb30.dts > arch/arm64/boot/dts/rockchip/rk3566-rgb20sx.dts
-  if [ "$(grep -c "rtl8723ds\|RGB20SX\|<5000>" arch/arm64/boot/dts/rockchip/rk3566-rgb20sx.dts)" != "5" ]; then
-    echo "ERROR: rk3566-rgb20sx.dts substitutions did not all apply."
-    exit 1
-  fi
-  grep -q rk3566-rgb20sx.dtb arch/arm64/boot/dts/rockchip/Makefile || \
-    echo 'dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-rgb20sx.dtb' >> arch/arm64/boot/dts/rockchip/Makefile
+  for pair in rk3566-rgb30:rk3566-rgb20sx rk3566-rgb30-v2:rk3566-rgb20sx-v2; do
+    src=arch/arm64/boot/dts/rockchip/${pair%%:*}.dts
+    dst=arch/arm64/boot/dts/rockchip/${pair##*:}.dts
+    sed -e 's/model = "Powkiddy RGB30.*"/model = "Powkiddy RGB20SX"/' \
+        -e 's/wifi_chip_type = "ap6330"/wifi_chip_type = "rtl8723ds"/' \
+        -e 's/"realtek,rtl8821cs-bt", "realtek,rtl8822cs-bt"/"realtek,rtl8723ds-bt", "realtek,rtl8723bs-bt"/' \
+        -e 's/design_capacity = <4100>/design_capacity = <5000>/' \
+        -e 's/design_qmax = <4100>/design_qmax = <5000>/' \
+        "$src" > "$dst"
+    if [ "$(grep -c "rtl8723ds\|RGB20SX\|<5000>" "$dst")" != "5" ]; then
+      echo "ERROR: $dst substitutions did not all apply."
+      exit 1
+    fi
+    grep -q "${pair##*:}.dtb" arch/arm64/boot/dts/rockchip/Makefile || \
+      echo "dtb-\$(CONFIG_ARCH_ROCKCHIP) += ${pair##*:}.dtb" >> arch/arm64/boot/dts/rockchip/Makefile
+  done
 fi
 
 make ARCH=arm64 rk3566_optimized_linux_defconfig
@@ -61,6 +65,7 @@ else
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${UNIT_DTB}.dtb Arkbuild/usr/local/bin/rgb30dtbs/${UNIT_DTB}.dtb.v1
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${UNIT_DTB}-v2.dtb Arkbuild/usr/local/bin/rgb30dtbs/${UNIT_DTB}.dtb.v2
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/rk3566-rgb20sx.dtb Arkbuild/usr/local/bin/rgb30dtbs/
+    sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/rk3566-rgb20sx-v2.dtb Arkbuild/usr/local/bin/rgb30dtbs/rk3566-rgb20sx.dtb.v2
   fi
 fi
 
