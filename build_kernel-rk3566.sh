@@ -26,8 +26,10 @@ if [ "$UNIT" = "rgb30" ]; then
         -e 's/"realtek,rtl8821cs-bt", "realtek,rtl8822cs-bt"/"realtek,rtl8723ds-bt", "realtek,rtl8723bs-bt"/' \
         -e 's/design_capacity = <4100>/design_capacity = <5000>/' \
         -e 's/design_qmax = <4100>/design_qmax = <5000>/' \
+        -e '/device-wake-gpios = <&gpio4 RK_PA4/d' \
+        -e '/host-wake-gpios = <&gpio4 RK_PA5/d' \
         "$src" > "$dst"
-    if [ "$(grep -c "rtl8723ds\|RGB20SX\|<5000>" "$dst")" != "5" ]; then
+    if [ "$(grep -c "rtl8723ds\|RGB20SX\|<5000>" "$dst")" != "5" ] || grep -q "wake-gpios" "$dst"; then
       echo "ERROR: $dst substitutions did not all apply."
       exit 1
     fi
