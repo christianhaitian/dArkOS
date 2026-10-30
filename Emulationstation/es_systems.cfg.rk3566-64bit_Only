@@ -1130,6 +1130,7 @@
 					<core>tgbdual</core>
 					<core>vbam</core>
 					<core>bsnes</core>
+					<core>armgba</core>
 				</cores>
 			</emulator>
 			<emulator name="mednafen">
@@ -1163,6 +1164,7 @@
 					<core>tgbdual</core>
 					<core>vbam</core>
 					<core>bsnes</core>
+					<core>armgba</core>
 				</cores>
 			</emulator>
 			<emulator name="mednafen">
@@ -1194,6 +1196,7 @@
 					<core>vbam</core>
 					<core>vba_next</core>
 					<core>gpsp</core>
+					<core>armgba</core>
 				</cores>
 			</emulator>
 			<emulator name="mednafen">

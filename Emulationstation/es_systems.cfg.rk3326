@@ -1198,6 +1198,7 @@
 					<core>sameboy</core>
 					<core>DoubleCherryGB</core>
 					<core>tgbdual</core>
+					<core>armgba</core>
 				</cores>
 			</emulator>
 			<emulator name="mednafen">
@@ -1229,6 +1230,7 @@
 					<core>sameboy</core>
 					<core>DoubleCherryGB</core>
 					<core>tgbdual</core>
+					<core>armgba</core>
 				</cores>
 			</emulator>
 			<emulator name="mednafen">
@@ -1260,6 +1262,7 @@
 					<core>vbam</core>
 					<core>vba_next</core>
 					<core>gpsp</core>
+					<core>armgba</core>
 				</cores>
 			</emulator>
 			<emulator name="retroarch32">

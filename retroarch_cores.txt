@@ -3,6 +3,7 @@
 applewin
 ardens
 arduous
+armgba
 atari800
 azahar
 a5200
