@@ -18,7 +18,7 @@ if [ "$ROOT_FILESYSTEM_FORMAT" == "xfs" ] || [ "$ROOT_FILESYSTEM_FORMAT" == "btr
     else
       ROOT_FILESYSTEM_FORMAT_PARAMETERS="-f -L ROOTFS"
     fi
-    ROOT_FILESYSTEM_MOUNT_OPTIONS="defaults,noatime,compress=zlib:1"
+    ROOT_FILESYSTEM_MOUNT_OPTIONS="defaults,noatime,compress=lzo"
   fi
 elif [[ "$ROOT_FILESYSTEM_FORMAT" == *"ext"* ]]; then
   ROOT_FILESYSTEM_FORMAT_PARAMETERS="-F -L ROOTFS"
