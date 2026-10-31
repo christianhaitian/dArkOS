@@ -2,6 +2,7 @@ ccache
 liba52-0.7.4
 libarchive-zip-perl
 libasound2t64
+libcurl4t64
 libevdev2
 libfaad2
 libfreetype6

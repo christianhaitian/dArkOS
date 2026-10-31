@@ -21,12 +21,13 @@ else
 	sudo tar -czpf Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.tar.gz Arkbuild/opt/yabasanshiro/
 	sudo curl -s https://raw.githubusercontent.com/christianhaitian/${CHIPSET}_core_builds/refs/heads/master/scripts/yabasanshirosa.sh | grep -oP '(?<=TAG=").*?(?=")' > Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.commit
 fi
-#if [ "$UNIT" == "rgb10" ] || [ "$UNIT" == "rk2020" ]; then
-  #sudo cp -a Arkbuild/opt/yabasanshiro/yabasanshiro.oga Arkbuild/opt/yabasanshiro/yabasanshiro
-#else
-  #sudo rm -fv Arkbuild/opt/yabasanshiro/yabasanshiro.oga
-#fi
+if [ "$UNIT" == "rgb10" ] || [ "$UNIT" == "rk2020" ]; then
+  sudo cp -a Arkbuild/opt/yabasanshiro/yabasanshiro-pirry.oga Arkbuild/opt/yabasanshiro/yabasanshiro
+else
+  sudo rm -fv Arkbuild/opt/yabasanshiro/yabasanshiro-pirry.oga
+fi
 sudo cp -a Arkbuild/opt/yabasanshiro/yabasanshiro-pirry Arkbuild/opt/yabasanshiro/yabasanshiro
+sudo rm -fv Arkbuild/opt/yabasanshiro/yabasanshiro-pirry
 call_chroot "chown -R ark:ark /opt/"
 sudo chmod 777 Arkbuild/opt/yabasanshiro/yabasanshiro
 sudo cp yabasanshiro/saturn.sh Arkbuild/usr/local/bin/saturn.sh

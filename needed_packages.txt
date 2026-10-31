@@ -48,6 +48,8 @@ libsdl2-image-2.0-0
 libsdl2-mixer-2.0-0
 libsdl2-net-2.0-0
 libsdl2-ttf-2.0-0
+libsdl3-image0
+libsdl3-ttf0
 libshaderc1
 libslirp0
 libspeechd2
