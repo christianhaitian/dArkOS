@@ -97,7 +97,7 @@ sudo cp amiga/amiga.sh Arkbuild/usr/local/bin/
 
 #Generate fstab to be used after EASYROMS expansion
 if [ "$ROOT_FILESYSTEM_FORMAT" == "btrfs" ]; then
-  ROOT_FILESYSTEM_MOUNT_OPTIONS="${ROOT_FILESYSTEM_MOUNT_OPTIONS},ssd_spread"
+  ROOT_FILESYSTEM_MOUNT_OPTIONS="${ROOT_FILESYSTEM_MOUNT_OPTIONS}"
 fi
 cat <<EOF | sudo tee ${mountpoint}/fstab.exfat
 LABEL=ROOTFS / ${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_MOUNT_OPTIONS} 0 0

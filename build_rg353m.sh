@@ -34,6 +34,7 @@ source ./bootstrap_rootfs-rk3566.sh
 source ./build_kernel-rk3566.sh
 source ./build_deps.sh
 source ./build_sdl2.sh
+source ./build_sdl3.sh
 source ./build_ppssppsa.sh
 source ./build_ppsspp-2021sa.sh
 source ./build_duckstationsa.sh
@@ -76,6 +77,7 @@ source ./build_controllertester.sh
 source ./build_batteryplus.sh
 source ./build_drastic.sh
 source ./build_dsperate.sh
+#source ./build_advanced_drastic.sh
 if [[ "${BUILD_BLUEALSA}" == "y" ]]; then
   source ./build_bluealsa.sh
 fi

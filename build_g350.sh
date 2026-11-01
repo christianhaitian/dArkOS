@@ -34,6 +34,7 @@ source ./image_setup.sh
 source ./build_kernel.sh
 source ./build_deps.sh
 source ./build_sdl2.sh
+source ./build_sdl3.sh
 source ./build_ppssppsa.sh
 source ./build_ppsspp-2021sa.sh
 source ./build_duckstationsa.sh

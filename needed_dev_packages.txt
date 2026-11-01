@@ -35,6 +35,8 @@ libsdl2-gfx-dev
 libsdl2-image-dev
 libsdl2-mixer-dev
 libsdl2-ttf-dev
+#libsdl3-image-dev
+#libsdl3-ttf-dev
 libslirp-dev
 libssl-dev
 libssl-ocaml-dev
