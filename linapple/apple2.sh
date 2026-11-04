@@ -18,16 +18,11 @@ else
 fi
 
 if [[ $EMULATOR == "linapple" ]]; then
-  # Check if this is a hard drive image.  If so, stop and inform the user to change to the applewin emulator for this game
-  if [ ".$(echo "$GAME"| cut -d. -f2)" == ".hdv" ] || [ ".$(echo "$GAME"| cut -d. -f2)" == ".HDV" ]; then
-    msgbox "This hard drive image will not work with the $EMULATOR emulator.  Please change the emulator for this game to applewin then try it again."
-    exit 0
-  fi
 
   directory=$(dirname "$GAME" | cut -d "/" -f2)
   GPTOKEYB="/opt/inttools/gptokeyb -1"
   export SDL_GAMECONTROLLERCONFIG_FILE="/opt/linapple/gamecontrollerdb.txt"
-  export SDL_GAMECONTROLLERCONFIG="$(cat /opt/linapple/gamecontrollerdb.txt)"
+  #export SDL_GAMECONTROLLERCONFIG="$(cat /opt/linapple/gamecontrollerdb.txt)"
 
   # The next 2 variables are for use with custom game controls if the user creates some
   gamecontrols=$(echo "$(ls "$GAME" | cut -d "/" -f4 | cut -d "." -f1)")
@@ -60,29 +55,27 @@ if [[ $EMULATOR == "linapple" ]]; then
 	if [ ".$(echo "$GAME"| cut -d. -f2)" == ".sh" ] || [ ".$(echo "$GAME"| cut -d. -f2)" == ".SH" ]; then
 	"$GAME"
 	elif [ ".$(echo "$GAME"| cut -d. -f2)" == ".apple2" ] || [ ".$(echo "$GAME"| cut -d. -f2)" == ".APPLE2" ]; then
-	  DISK1=""; DISK2=""; CONF=""; PARAMS=""; APPLE2_BASE_DIR="/$directory/apple2/"
+	  DISK1=""; DISK2=""; HDD1=""; HDD2=""; CONF=""; PARAMS=""; APPLE2_BASE_DIR="/$directory/apple2/"
 	  dos2unix "${GAME}"
 	  while IFS== read -r key value; do
 	    if [ "$key" == "DISK1" ]; then DISK1+=" ${APPLE2_BASE_DIR}${value}"
 	    elif [ "$key" == "DISK2" ]; then DISK2+=" ${APPLE2_BASE_DIR}${value}"
+	    elif [ "$key" == "HDD1" ]; then HDD1+=" ${APPLE2_BASE_DIR}${value}"
+	    elif [ "$key" == "HDD2" ]; then HDD2+=" ${APPLE2_BASE_DIR}${value}"
 	    elif [ "$key" == "CONF" ]; then CONF+=" ${APPLE2_BASE_DIR}conf/${value}"
 	    fi
 	  done < "${GAME}"
 	  if [ "$DISK1" ]; then PARAMS+=" --d1 ${DISK1:1}"; fi
 	  if [ "$DISK2" ]; then PARAMS+=" --d2 ${DISK2:1}"; fi
+	  if [ "$HDD1" ]; then PARAMS+=" --hd1 ${HDD1:1}"; fi
+	  if [ "$HDD2" ]; then PARAMS+=" --hd2 ${HDD2:1}"; fi
 	  if [ "$CONF" ]; then PARAMS+=" --conf ${CONF:1}"; fi
-      if [ -z "$CONF" ] && [ -f "/boot/rk3326-rg351v-linux.dtb" ]; then PARAMS+=" --conf /opt/linapple/conf/invertedjoy.conf "; fi
+      if [ -z "$CONF" ]; then PARAMS+=" --conf /opt/linapple/conf/linapple.conf "; fi
 	  /opt/linapple/linapple ${PARAMS:1} --autoboot
 	else
 	   if [ -f "$custom_linappleconfig_nocase" ]; then
 	     #echo "Loading custom linapple config from $custom_linappleconfig_nocase" >> /dev/tty1
 	     /opt/linapple/linapple --conf "$custom_linappleconfig_nocase" --d1 "$GAME" --autoboot
-	   elif [ -f "/boot/rk3326-rg351v-linux.dtb" ]; then
-	     #echo "Loading default config /opt/linapple/conf/invertedjoy.conf" >> /dev/tty1
-	     /opt/linapple/linapple --conf "/opt/linapple/conf/invertedjoy.conf" --d1 "$GAME" --autoboot
-           elif [ -f "/boot/rk3326-gameforce-linux.dtb" ]; then
-             #echo "Loading default config /opt/linapple/conf/chijoy.conf" >> /dev/tty1
-             /opt/linapple/linapple --conf "/opt/linapple/conf/chijoy.conf" --d1 "$GAME" --autoboot
 	   else
 	     #echo "Loading default config /opt/linapple/conf/normaljoy.conf" >> /dev/tty1
 	     /opt/linapple/linapple --conf "/opt/linapple/conf/normaljoy.conf" --d1 "$GAME" --autoboot
@@ -121,6 +114,13 @@ elif [[ $EMULATOR == "applewin" ]]; then
 		export HOTKEY="l3"
 	  fi
 
+	# This section will clear out all previously entered disk images because applewin will default to
+	# booting a hard disk image if one was loaded previously and will not boot to any floppy disks after.
+	sed -i 's/Last Harddisk Image 1=.*/Last Harddisk Image 1=/' ~/.applewin/applewin.conf
+	sed -i 's/Last Harddisk Image 2=.*/Last Harddisk Image 2=/' ~/.applewin/applewin.conf
+	sed -i 's/Last Disk Image 1=.*/Last Disk Image 1=/' ~/.applewin/applewin.conf
+	sed -i 's/Last Disk Image 2=.*/Last Disk Image 2=/' ~/.applewin/applewin.conf
+
       # Here we can load custom game controls instead of the default controls.
       # Users can create their own mappings for each game.  
       # Just create a controls subfolder within the roms/apple2 (roms2/apple2 for 2 sd card setups) 
@@ -140,17 +140,17 @@ elif [[ $EMULATOR == "applewin" ]]; then
 	if [ ".$(echo "$GAME"| cut -d. -f2)" == ".sh" ] || [ ".$(echo "$GAME"| cut -d. -f2)" == ".SH" ]; then
 	  "$GAME"
 	elif [ ".$(echo "$GAME"| cut -d. -f2)" == ".apple2" ] || [ ".$(echo "$GAME"| cut -d. -f2)" == ".APPLE2" ]; then
-	  DISK1=""; DISK2=""; PARAMS=""; APPLE2_BASE_DIR="/$directory/apple2/"
+	  DISK1=""; DISK2=""; HDD=""; PARAMS=""; APPLE2_BASE_DIR="/$directory/apple2/"
 	  dos2unix "${GAME}"
 	  while IFS== read -r key value; do
 	    if [ "$key" == "DISK1" ]; then DISK1+=" ${APPLE2_BASE_DIR}${value}"
 	    elif [ "$key" == "DISK2" ]; then DISK2+=" ${APPLE2_BASE_DIR}${value}"
-	    elif [ "$key" == "CONF" ]; then CONF+=" ${APPLE2_BASE_DIR}conf/${value}"
+	    elif [ "$key" == "HDD" ]; then HDD+=" ${APPLE2_BASE_DIR}${value}"
 	    fi
 	  done < "${GAME}"
 	  if [ "$DISK1" ]; then PARAMS+=" -1 ${DISK1:1}"; fi
 	  if [ "$DISK2" ]; then PARAMS+=" -2 ${DISK2:1}"; fi
-	  if [ "$CONF" ]; then PARAMS+=" --conf ${CONF:1}"; fi
+	  if [ "$HDD" ]; then PARAMS+=" --h1 ${HDD:1}"; fi
 	  LD_LIBRARY_PATH=/opt/applewin/libs /opt/applewin/applewin/sa2 --game-mapping-file /opt/linapple/gamecontrollerdb.txt --fixed-speed --no-imgui ${PARAMS:1}
 	elif [ ".$(echo "$GAME"| cut -d. -f2)" == ".hdv" ] || [ ".$(echo "$GAME"| cut -d. -f2)" == ".HDV" ]; then
 	  LD_LIBRARY_PATH=/opt/applewin/libs /opt/applewin/applewin/sa2 --game-mapping-file /opt/linapple/gamecontrollerdb.txt --fixed-speed --no-imgui --h1 "$GAME"

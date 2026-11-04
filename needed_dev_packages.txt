@@ -3,6 +3,7 @@ autotools-dev
 build-essential
 ccache
 curl
+imagemagick
 jq
 libasound2-dev
 libboost-date-time-dev
