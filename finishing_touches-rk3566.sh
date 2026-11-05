@@ -271,8 +271,11 @@ sudo cp scripts/arkos_ap_mode.sh Arkbuild/usr/local/bin/
 sudo cp scripts/auto_suspend* Arkbuild/usr/local/bin/
 sudo cp scripts/processcheck.sh Arkbuild/usr/local/bin/
 sudo cp scripts/autosuspend.service Arkbuild/etc/systemd/system/
+sudo cp scripts/lowbatt_suspend.sh Arkbuild/usr/local/bin/
+sudo cp scripts/lowbatt-suspend.service Arkbuild/etc/systemd/system/
 sudo chroot Arkbuild/ bash -c "pip install --break-system-packages --root-user-action ignore inputs"
 sudo chroot Arkbuild/ bash -c "systemctl disable autosuspend"
+sudo chroot Arkbuild/ bash -c "systemctl enable lowbatt-suspend"
 sudo cp scripts/rk3566/shutdowntasks.service Arkbuild/etc/systemd/system/
 sudo chroot Arkbuild/ bash -c "(crontab -l 2>/dev/null; echo \"@reboot /usr/local/bin/panel_set.sh RestoreSettings &\") | crontab -"
 sudo chroot Arkbuild/ bash -c "systemctl enable shutdowntasks"
