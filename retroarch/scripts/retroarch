@@ -5,14 +5,28 @@ printf "\033c" > /dev/tty0
 dialog --clear
 
 emulator=$(basename "$0")
+core="$(echo "$@" | grep -o -P '(?<=cores\/).*(?=_libretro.so)')"
 
 . /usr/local/bin/buttonmon.sh
 
+if [[ "$core" == "azahar" ]]; then
+	if [[ "$(free -m | awk '/^Mem:/{print $2}')" -lt "1900" ]]; then
+	  if [[ -z "$(zramctl)" ]]; then
+		printf "Enabling zram.  Please wait...\n" >> /dev/tty1
+		sudo modprobe zram num_devices=1
+		echo lz4 | sudo tee /sys/block/zram0/comp_algorithm
+		echo 1G | sudo tee /sys/block/zram0/disksize
+		sudo mkswap /dev/zram0
+		sudo swapon /dev/zram0 -p 100
+		printf "Continuing with 3ds emulation now.." >> /dev/tty1
+	  fi
+	fi
+fi
+
 Test_Button_X
 if [ "$?" -eq "10" ]; then
-  core="$(echo "$@" | grep -o -P '(?<=cores\/).*(?=_libretro.so)')"
   game="$(echo "$@" | grep -o -P '(?<=_libretro.so ).*(?=)')"
-  nonetplay=( "arduous" "atari800" "bluemsx" "coolcv" "dosbox" \
+  nonetplay=( "armgba" "arduous" "atari800" "bluemsx" "coolcv" "dosbox" \
               "duckstation" "easyrpg" "ecwolf" \
               "fake08" "flycast" "flycast32_rumble" "flycast_rumble" \
               "flycast_xtreme" "freechaf" "freeintv" "fuse" "gambatte" \

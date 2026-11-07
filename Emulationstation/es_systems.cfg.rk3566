@@ -1571,13 +1571,14 @@
 		      </emulator>
 			<emulator name="retroarch32">
 				<cores>
-					<core>yabasanshiro</core>
 					<core>yabadabadoo</core>
+					<core>yabasanshiro</core>
 					<core>yabause</core>
 				</cores>
 			</emulator>
 			<emulator name="retrorun32">
 				<cores>
+					<core>yabadabadoo</core>
 					<core>yabasanshiro</core>
 				</cores>
 			</emulator>
