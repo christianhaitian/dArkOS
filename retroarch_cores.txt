@@ -50,6 +50,7 @@ hatari
 hatarib
 libgametank
 lowresnx
+makecode_arcade
 mame
 mame2000
 mame2003
