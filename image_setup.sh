@@ -23,6 +23,9 @@ else
   git clone --depth=1 https://github.com/christianhaitian/u-boot-${CHIPSET}
 fi
 cd u-boot-${CHIPSET}
+if [ "$UNIT" == "a10mini" ]; then
+  sed -i 's/rk3326_ddr_333MHz_v1\.10\.bin/rk3326_ddr_333MHz_v2.12.bin/' make.sh
+fi
 ./make.sh odroidgoa
 
 dd if="sd_fuse/idbloader.img" of="../${DISK}" bs=512 seek=64 conv=sync,noerror,notrunc

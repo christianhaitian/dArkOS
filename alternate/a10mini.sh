@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # We'll finalize the regular a10mini image first
-sudo mv -fv Arkbuild/opt/retroarch/bin/retroarch.${UNIT}v4 /tmp/${UNIT}v4/.
-sudo mv -fv Arkbuild/opt/retroarch/bin/retroarch32.${UNIT}v4 /tmp/${UNIT}v4/.
-sudo mv -fv Arkbuild/usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.$extension.${UNIT}v4 /tmp/${UNIT}v4/libSDL2-2.0.so.0.$extension.${UNIT}v4.32
-sync Arkbuild
-sudo dd if="${FILESYSTEM}" of="${DISK}" bs=512 seek="${STORAGE_PART_START}" conv=fsync,notrunc
-sync ${DISK}
+sudo mkdir -p /tmp/a10-rootfs
+sudo mount ${LOOP}p2 /tmp/a10-rootfs
+sudo mv -fv /tmp/a10-rootfs/opt/retroarch/bin/retroarch.${UNIT}v4 /tmp/${UNIT}v4/.
+sudo mv -fv /tmp/a10-rootfs/opt/retroarch/bin/retroarch32.${UNIT}v4 /tmp/${UNIT}v4/.
+sudo mv -fv /tmp/a10-rootfs/usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.$extension.${UNIT}v4 /tmp/${UNIT}v4/libSDL2-2.0.so.0.$extension.${UNIT}v4.32
+sync /tmp/a10-rootfs
+#sudo dd if="${FILESYSTEM}" of="${DISK}" bs=512 seek="${STORAGE_PART_START}" conv=fsync,notrunc
+sync
+sudo umount -l /tmp/a10-rootfs
 
 # Now we prepare the a10mini v4 image
 iName=`echo ${UNIT} | tr '[:lower:]' '[:upper:]'`
