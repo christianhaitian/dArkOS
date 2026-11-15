@@ -2,7 +2,8 @@
 
 # We'll finalize the regular a10mini image first
 sudo mkdir -p /tmp/a10-rootfs
-sudo mount ${LOOP}p2 /tmp/a10-rootfs
+LOOP_MAIN=$(sudo losetup --find --show --partscan "$DISK")
+sudo mount ${LOOP_MAIN}p2 /tmp/a10-rootfs
 sudo mv -fv /tmp/a10-rootfs/opt/retroarch/bin/retroarch.${UNIT}v4 /tmp/${UNIT}v4/.
 sudo mv -fv /tmp/a10-rootfs/opt/retroarch/bin/retroarch32.${UNIT}v4 /tmp/${UNIT}v4/.
 sudo mv -fv /tmp/a10-rootfs/usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.$extension.${UNIT}v4 /tmp/${UNIT}v4/libSDL2-2.0.so.0.$extension.${UNIT}v4.32
