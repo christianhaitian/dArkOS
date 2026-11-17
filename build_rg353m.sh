@@ -87,6 +87,9 @@ fi
 source ./finishing_touches-rk3566.sh
 source ./cleanup_filesystem.sh
 source ./write_rootfs-rk3566.sh
+# The rg353v is the exactly the same as the rg353m except with one speaker instead of 2.
+# So might as well copy this image over and make the slight changes here without another long build.
+source ./alternate/rg353.sh
 source ./clean_mounts.sh
 source ./create_image.sh
 ) 2>&1 | tee -a build.log

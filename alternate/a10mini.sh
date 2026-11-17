@@ -63,3 +63,4 @@ sync
 sudo umount -l /tmp/a10v4-rootfs
 sudo umount -l /tmp/a10v4-boot
 sudo losetup -d ${LOOP_ALT}
+sudo rm -rf /tmp/a10*

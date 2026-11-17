@@ -161,8 +161,8 @@ else
 		[ -d freej2me-plus ] && rm -rf freej2me-plus || echo \"Cloning into freej2me-plus\" &&
 		git clone --recursive https://github.com/TASEmulators/freej2me-plus.git &&
 		cd freej2me-plus &&
-		sed -i 's/freej2me-lr.jar/freej2me-plus-lr.jar/' build.xml &&
-		sed -i 's/1.6/1.8/' build.xml &&
+		sed -i 's/freej2me_plus-lr.jar/freej2me-plus-lr.jar/' build.xml &&
+		sed -i 's/1.5/1.8/' build.xml &&
 		ant
 		"
    sudo mkdir -p Arkbuild/usr/local/bin/freej2me_files/
