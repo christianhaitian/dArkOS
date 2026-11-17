@@ -23,7 +23,21 @@ ifeq ($(DEBIAN_CODE_NAME),)
 endif
 
 all:
-	@echo "Please specify a valid build target: make rgb10 or make rg353m"
+	$(info dArkOS will be built using the $(DEBIAN_CODE_NAME) release of Debian.)
+	$(info debian building caching enabled? ${ENABLE_CACHE})
+	$(info adding armhf 32bit userspace? ${BUILD_ARMHF})
+	$(info adding bluetooth support? ${BUILD_BLUEALSA})
+	@sleep 5
+	./build_a10mini.sh
+	./build_g350.sh
+	./build_rg351mp.sh
+	./build_rgb10.sh
+	./build_miniloong.sh
+	./build_rgb20pro.sh
+	./build_rgb30.sh
+	./build_rg353m.sh
+	./build_rg503.sh
+	./build_rk2023.sh
 
 a10mini:
 	$(info dArkOS will be built using the $(DEBIAN_CODE_NAME) release of Debian.)
