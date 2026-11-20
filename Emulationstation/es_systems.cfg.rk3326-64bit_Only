@@ -2098,6 +2098,18 @@
 		<hardware>game engine</hardware>
 	</system>
 	<system>
+		<name>makecode</name>
+		<fullname>MakeCode Arcade</fullname>
+		<path>/roms/makecode/</path>
+		<extension>.pxt64 .PXT64</extension>
+		<command>sudo perfmax %GOVERNOR% %ROM%; nice -n -19 /usr/local/bin/retroarch -L /home/ark/.config/retroarch/cores/makecode_arcade_libretro.so %ROM%; sudo perfnorm</command>
+		<platform>makecode</platform>
+		<theme>makecode</theme>
+		<manufacturer>Microsoft</manufacturer>
+		<release>2019</release>
+		<hardware>game engine</hardware>
+	</system>
+	<system>
 		<name>palm</name>
 		<fullname>Palm</fullname>
 		<path>/roms/palm/</path>
