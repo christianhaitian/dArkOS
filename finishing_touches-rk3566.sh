@@ -198,6 +198,12 @@ cat <<EOF | sudo tee Arkbuild/etc/modprobe.d/8821cs.conf
 # Disable power saving
 options 8821cs rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=0
 EOF
+if [[ "$UNIT" == "rgb30" ]]; then
+cat <<EOF | sudo tee Arkbuild/etc/modprobe.d/8723ds.conf
+# Disable power saving
+options 8723ds rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=0
+EOF
+fi
 
 # Add USB DAC Support
 echo -e "Generating 20-usb-alsa.rules udev for usb dac support"
