@@ -77,6 +77,7 @@ source ./build_controllertester.sh
 source ./build_batteryplus.sh
 source ./build_drastic.sh
 source ./build_dsperate.sh
+source ./build_armsx2.sh
 if [[ "${BUILD_BLUEALSA}" == "y" ]]; then
   source ./build_bluealsa.sh
 fi
