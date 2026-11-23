@@ -1,9 +1,9 @@
 #!/bin/bash
 
-ARMSX2_FILE="ARMSX2-nightly-20261120-1d1c26d8a2-Linux-arm64-SDL-handheld.tar.zst"
+ARMSX2_FILE="ARMSX2-nightly-20261122-63703376113cb1de711-Linux-arm64-SDL-handheld.tar.zst"
 ARMSX2_NIGHTLY=$(echo $ARMSX2_FILE | cut -d'-' -f2,3)
 ARMSX2_SHA=$(echo $ARMSX2_FILE | cut -d'-' -f4)
-MALISX2_FILE="malisx2-0.5.1-aarch64.tar.gz"
+MALISX2_FILE="malisx2-0.6.1-aarch64.tar.gz"
 MALISX2_VERSION=$(echo $MALISX2_FILE | cut -d'-' -f2)
 
 sudo mkdir -p Arkbuild/opt/armsx2
