@@ -1017,6 +1017,7 @@
 		<emulators>
 			<emulator name="retroarch">
 				<cores>
+					<core>armn64</core>
 					<core>parallel_n64</core>
 					<core>mupen64plus_next</core>
 					<core>mupen64plus</core>
@@ -1067,6 +1068,22 @@
 		<manufacturer>LOVE Development Team</manufacturer>
 		<release>2008</release>
 		<hardware>game engine</hardware>
+	</system>
+	<system>
+		<name>ps2</name>
+		<fullname>PlayStation 2</fullname>
+		<path>/roms/ps2/</path>
+		<extension>.cue .CUE .chd .CHD .cso .CSO .ciso .CISO .iso .ISO .gz .GZ .elf .ELF .bin .BIN .mdf .MDF .nrg .NRG .dump .DUMP .img .IMG</extension>
+		<command>sudo perfmax %GOVERNOR% %ROM%; nice -n -19 /usr/local/bin/ps2.sh %EMULATOR% %ROM%; sudo perfnorm</command>
+		<emulators>
+			<emulator name="standalone-armsx2">
+			</emulator>
+		</emulators>
+		<platform>ps2</platform>
+		<theme>ps2</theme>
+		<manufacturer>Sony</manufacturer>
+		<release>2000</release>
+		<hardware>console</hardware>
 	</system>
 	<system>
 		<name>Gamecube</name>
@@ -2432,6 +2449,18 @@
 		<theme>vhs</theme>
 		<manufacturer>Various</manufacturer>
 		<release>unknown</release>
+	</system>
+	<system>
+		<name>gamate</name>
+		<fullname>Gamate</fullname>
+		<path>/roms/gamate/</path>
+		<extension>.bin .BIN .gam .GAM</extension>
+		<command>sudo perfmax %GOVERNOR% %ROM%; nice -n -19 /usr/local/bin/retroarch -L /home/ark/.config/retroarch/cores/superwhizkid_libretro.so %ROM%; sudo perfnorm</command>
+		<platform>gamate</platform>
+		<theme>gamate</theme>
+		<manufacturer>Bitcorp</manufacturer>
+		<release>1990</release>
+		<hardware>handheld</hardware>
 	</system>
 	<system>
 		<name>retroarch</name>

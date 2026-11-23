@@ -1,0 +1,7 @@
+{
+    "file_format_version": "1.0.1",
+    "ICD": {
+        "library_path": "/opt/malisx2/libvulkan_malisx2.so",
+        "api_version": "1.3.0"
+    }
+}

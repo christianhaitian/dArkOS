@@ -1005,6 +1005,7 @@
 		<emulators>
 			<emulator name="retroarch">
 				<cores>
+					<core>armn64</core>
 					<core>parallel_n64</core>
 					<core>mupen64plus_next</core>
 					<core>mupen64plus</core>
@@ -2369,6 +2370,18 @@
 		<theme>vhs</theme>
 		<manufacturer>Various</manufacturer>
 		<release>unknown</release>
+	</system>
+	<system>
+		<name>gamate</name>
+		<fullname>Gamate</fullname>
+		<path>/roms/gamate/</path>
+		<extension>.bin .BIN .gam .GAM</extension>
+		<command>sudo perfmax %GOVERNOR% %ROM%; nice -n -19 /usr/local/bin/retroarch -L /home/ark/.config/retroarch/cores/superwhizkid_libretro.so %ROM%; sudo perfnorm</command>
+		<platform>gamate</platform>
+		<theme>gamate</theme>
+		<manufacturer>Bitcorp</manufacturer>
+		<release>1990</release>
+		<hardware>handheld</hardware>
 	</system>
 	<system>
 		<name>retroarch</name>
