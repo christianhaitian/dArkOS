@@ -1,0 +1,13 @@
+[Unit]
+Description=Suspend on low battery
+After=multi-user.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/lowbatt_suspend.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
