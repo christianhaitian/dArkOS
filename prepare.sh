@@ -64,5 +64,25 @@ if [ ! -d "Arkbuild_ccache" ]; then
   mkdir Arkbuild_ccache
 fi
 export CCACHE_DIR=${PWD}/Arkbuild_ccache
+
+CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-50G}"
+if [ ! -f "${CCACHE_DIR}/ccache.conf" ] || ! sudo grep -q "^max_size" "${CCACHE_DIR}/ccache.conf"; then
+  # sudo, like every other file write here: the directory is bind mounted into the
+  # chroot and root writes into it for the whole build, so an unprivileged tee can
+  # fail on a tree from an earlier sudo-run build and silently leave the 5G default.
+  # Only max_size is set.  Nothing here relaxes ccache's correctness checks:
+  # include_file_mtime/ctime sloppiness would let a regenerated autoconf.h go
+  # unnoticed, and the kernel regenerates exactly that on every defconfig change.
+  echo "max_size = ${CCACHE_MAX_SIZE}" | sudo tee "${CCACHE_DIR}/ccache.conf" > /dev/null
+fi
+
 sudo /usr/sbin/update-ccache-symlinks
+
+for CROSS_TOOL in gcc g++ cpp c++; do
+  CROSS_BIN="${CROSS_COMPILE:-aarch64-linux-gnu-}${CROSS_TOOL}"
+  if command -v "${CROSS_BIN}" > /dev/null 2>&1 && [ ! -e "/usr/lib/ccache/${CROSS_BIN}" ]; then
+    sudo ln -sf /usr/bin/ccache "/usr/lib/ccache/${CROSS_BIN}"
+  fi
+done
+
 [ -z $(echo $PATH | grep ccache) ] && export PATH=/usr/lib/ccache:$PATH

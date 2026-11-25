@@ -56,6 +56,15 @@ echo "exit 101" | sudo tee Arkbuild/usr/sbin/policy-rc.d > /dev/null
 sudo chmod 0755 Arkbuild/usr/sbin/policy-rc.d
 sudo chroot Arkbuild/ mount -t proc proc /proc
 
+sudo mkdir -p Arkbuild/etc/dpkg/dpkg.cfg.d
+cat <<'EOF' | sudo tee Arkbuild/etc/dpkg/dpkg.cfg.d/01-darkos-slim > /dev/null
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/info/*
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+EOF
+echo 'man-db man-db/auto-update boolean false' | sudo chroot Arkbuild/ debconf-set-selections 2>/dev/null || true
+
 # Install base runtime packages
 sudo chroot Arkbuild/ eatmydata apt-get -y update
 sudo chroot Arkbuild/ eatmydata apt-get -y upgrade
