@@ -37,7 +37,7 @@ sudo mount ${LOOP_ALT}p4 /tmp/${SAME_DEVICE}-rootfs
 
 sudo rm -fv /tmp/${SAME_DEVICE}-boot/${CHIPSET}-${UNIT}*
 sudo mv -fv /tmp/${SAME_DEVICE}/${CHIPSET}-${SAME_DEVICE}* /tmp/${SAME_DEVICE}-boot/.
-sudo sed -i 's/353m/${SAME_DEVICE}/g' /tmp/${SAME_DEVICE}-boot/extlinux/extlinux.conf
+sudo sed -i "s/353m/${SAME_DEVICE}/g" /tmp/${SAME_DEVICE}-boot/extlinux/extlinux.conf
 echo "${SAME_DEVICE^^}" | sudo tee /tmp/${SAME_DEVICE}-rootfs/home/ark/.config/.DEVICE
 echo "${SAME_DEVICE}" | sudo tee /tmp/${SAME_DEVICE}-rootfs/etc/hostname
 sudo sed -i "s/rg353m/${SAME_DEVICE}/g" /tmp/${SAME_DEVICE}-rootfs/etc/hosts
