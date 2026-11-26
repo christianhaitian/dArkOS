@@ -84,7 +84,7 @@ sudo chroot Arkbuild/ ldconfig -X
 sudo chroot ${CHROOT_DIR}/ bash -c "git clone https://github.com/mesonbuild/meson.git && ln -s /meson/meson.py /usr/bin/meson"
 
 # Build and install librga
-sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+sudo chroot ${CHROOT_DIR}/ bash -c "source /root/.bashrc && cd /home/ark &&
   git clone https://github.com/christianhaitian/linux-rga.git &&
   cd linux-rga &&
   git checkout 1fc02d56d97041c86f01bc1284b7971c6098c5fb &&
@@ -97,7 +97,7 @@ sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
   "
 
 # Build and install libgo2
-sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+sudo chroot ${CHROOT_DIR}/ bash -c "source /root/.bashrc && cd /home/ark &&
   git clone https://github.com/OtherCrashOverride/libgo2.git &&
   cd libgo2 &&
   premake4 gmake &&

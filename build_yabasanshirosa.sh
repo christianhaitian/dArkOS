@@ -4,7 +4,7 @@
 if [ -f "Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.tar.gz" ] && [ "$(cat Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.commit)" == "$(curl -s https://raw.githubusercontent.com/christianhaitian/${CHIPSET}_core_builds/refs/heads/master/scripts/yabasanshirosa-pirry.sh | grep -oP '(?<=TAG=").*?(?=")')" ]; then
     sudo tar -xvzpf Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.tar.gz
 else
-	call_chroot "source /root/.bashrc && cd /home/ark &&
+	call_chroot "cd /home/ark &&
 	  cd ${CHIPSET}_core_builds &&
 	  chmod 777 builds-alt.sh &&
 	  sed -i '/python-pip/s//python3-pip/g' scripts/yabasanshirosa-pirry.sh &&
