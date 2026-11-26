@@ -25,7 +25,7 @@ access to over 64,000 packages you can install via the Debian Advanced Package T
       - Method 2: - Clone this git repo then run `./FreeSudo.sh`.  If there were no errors, it should've completed this change for you. \
                     You can verify this by checking if a `/etc/sudoers.d/$USER` file exists and contains `$USER ALL=(ALL) NOPASSWD: ALL` in it.
      
-Now you should be able to just run make <device_name> to build for a supported device.  Example: `make rg353m`
+Now you should be able to just run make <device_name> to build for a supported device.  Example: `make rg353`
 
 **Notes**
 - To build on a different release of Debian, change the DEBIAN_CODE_NAME export in the Makefile or add DEBIAN_CODE_NAME=<release> as a variable to `make`.  Other debian code names can be found at https://www.debian.org/releases/

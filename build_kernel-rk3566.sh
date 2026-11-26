@@ -42,8 +42,10 @@ else
   if [[ "$UNIT" == *"353"* ]]; then
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${UNIT_DTB}-notimingchange.dtb ${mountpoint}/
     sudo mkdir -p /tmp/rg353v
+    sudo mkdir -p /tmp/rk2023
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/rk3566-353v.dtb /tmp/rg353v/
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/rk3566-353v-notimingchange.dtb /tmp/rg353v/
+    sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/rk3566-rk2023.dtb /tmp/rk2023/
   elif [ "$UNIT" == "rgb30" ]; then
     sudo mkdir -p Arkbuild/usr/local/bin/rgb30dtbs/
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${UNIT_DTB}.dtb Arkbuild/usr/local/bin/rgb30dtbs/${UNIT_DTB}.dtb.v1

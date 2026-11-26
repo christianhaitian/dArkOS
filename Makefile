@@ -37,7 +37,6 @@ all:
 	./build_rgb30.sh
 	./build_rg353m.sh
 	./build_rg503.sh
-	./build_rk2023.sh
 
 a10mini:
 	$(info dArkOS will be built using the $(DEBIAN_CODE_NAME) release of Debian.)
@@ -106,14 +105,6 @@ rg503:
 	$(info adding bluetooth support? ${BUILD_BLUEALSA})
 	@sleep 5
 	./build_rg503.sh
-
-rk2023:
-	$(info dArkOS will be built using the $(DEBIAN_CODE_NAME) release of Debian.)
-	$(info debian building caching enabled? ${ENABLE_CACHE})
-	$(info adding armhf 32bit userspace? ${BUILD_ARMHF})
-	$(info adding bluetooth support? ${BUILD_BLUEALSA})
-	@sleep 5
-	./build_rk2023.sh
 
 devenv:
 	$(info dArkOS will be built using the $(DEBIAN_CODE_NAME) release of Debian.)

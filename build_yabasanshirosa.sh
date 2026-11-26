@@ -19,7 +19,7 @@ else
 	  sudo rm -f Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.commit
 	fi
 	sudo tar -czpf Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.tar.gz Arkbuild/opt/yabasanshiro/
-	sudo curl -s https://raw.githubusercontent.com/christianhaitian/${CHIPSET}_core_builds/refs/heads/master/scripts/yabasanshirosa.sh | grep -oP '(?<=TAG=").*?(?=")' > Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.commit
+	sudo curl -s https://raw.githubusercontent.com/christianhaitian/${CHIPSET}_core_builds/refs/heads/master/scripts/yabasanshirosa-pirry.sh | grep -oP '(?<=TAG=").*?(?=")' > Arkbuild_package_cache/${CHIPSET}/yabasanshirosa.commit
 fi
 if [ "$UNIT" == "rgb10" ] || [ "$UNIT" == "rk2020" ]; then
   sudo cp -a Arkbuild/opt/yabasanshiro/yabasanshiro-pirry.oga Arkbuild/opt/yabasanshiro/yabasanshiro
