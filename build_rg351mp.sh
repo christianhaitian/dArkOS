@@ -77,6 +77,9 @@ source ./build_dsperate.sh
 source ./finishing_touches.sh
 source ./cleanup_filesystem.sh
 source ./write_rootfs.sh
+#This unit has a g350 clone.  Instead of building it twice, we'll just create a copy of the current
+#build with the rotated sdl, retroarch files and other needs included now to save on build time.
+source ./alternate/g350.sh
 source ./clean_mounts.sh
 source ./create_image.sh
 ) 2>&1 | tee -a build.log

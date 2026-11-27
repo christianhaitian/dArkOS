@@ -48,7 +48,10 @@ sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${KERNEL_DTB} ${mountpoint}/
 if [ "$UNIT" == "rg351mp" ] || [ "$UNIT" == "g350" ] || [ "$UNIT" == "a10mini" ]; then
   sudo cp /tmp/${UNIT}-uboot.dtb ${mountpoint}/rg351mp-uboot.dtb
   sudo rm /tmp/${UNIT}-uboot.dtb
-  if [ "$UNIT" == "a10mini" ]; then
+  if [ "$UNIT" == "rg351mp" ]; then
+    sudo mkdir -p /tmp/g350
+    sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${CHIPSET}-g350-linux.dtb /tmp/g350/
+  elif [ "$UNIT" == "a10mini" ]; then
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${CHIPSET}-${UNIT}-60hz-linux.dtb ${mountpoint}/
     sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${CHIPSET}-${UNIT}-v4-linux.dtb /tmp/a10miniv4/
   fi
