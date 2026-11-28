@@ -46,7 +46,7 @@ printf '\x1f\xf9\x04\x71' | \
 dd of=/tmp/${SAME_DEVICE}-rootfs/usr/local/bin/ogage bs=1 seek=$((0x81b4)) conv=notrunc status=none
 sed -i -E '/name="system_hk"/s/id="[0-9]+"/id="12"/' /tmp/${SAME_DEVICE}-rootfs/etc/emulationstation/es_input.cfg
 cp lzdoom/configs/${SAME_DEVICE}/lzdoom.ini /tmp/${SAME_DEVICE}-rootfs/home/ark/.config/lzdoom/.
-cp gzdoom/configs/${SAME_DEVICE}/lzdoom.ini /tmp/${SAME_DEVICE}-rootfs/home/ark/.config/lzdoom/.
+cp gzdoom/configs/${SAME_DEVICE}/gzdoom.ini /tmp/${SAME_DEVICE}-rootfs/home/ark/.config/lzdoom/.
 sync
 
 sudo umount -l /tmp/${SAME_DEVICE}-rootfs
